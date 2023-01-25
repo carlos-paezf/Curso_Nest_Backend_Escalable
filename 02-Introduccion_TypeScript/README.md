@@ -62,3 +62,22 @@ document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
 ```
 
 Cuando tenemos un archivo en el que estamos exportando una variable, función o instancia, ya se puede considerar un módulo. Siempre es importante evitar escribir código como uso de funciones o por el estilo, puesto que esto hace que se tenga que ejecutar todo el archivo por un solo uso. Es preferible que los módulos solo sean usados para exportar declaraciones.
+
+## Tipos de datos - Continuación
+
+En TS tenemos Type Safety, lo cual nos permite que una vez declarado el tipo de la variable, solo se puede usar un valor del mismo tipo:
+
+```ts
+const name: string = 'Ferrer'  // ✅
+const age: number = '22'       // ❌
+```
+
+Es importante recordar que tenemos los keywords `var`, `let` y `const`, teniendo en cuenta que el primero no es recomendado, el segundo nos permite cambiar el valor de la variable dentro del scope en que se creo, y el tercero mantiene un valor inmutable dentro de su scope.
+
+Así como podemos dejar que TS infiera el tipo, o podemos declarar el tipo de la valor, tenemos la posibilidad de definir múltiples opciones de tipo para el valor:
+
+```ts
+const variable: string | number | boolean | undefined | null | [] | {} = `valor` 
+```
+
+En los strings tenemos la opción de usar `""`, `''` o <code>``</code> para encerrar el valor del string. La diferencia radica en que por medio de la tercera forma, conocida como template string, podemos interpolar un valor mediante el uso de <code>${}</code>, como lo vimos en el ejemplo de la [lección anterior](README.md#tipos-y-bases-sobre-módulos)

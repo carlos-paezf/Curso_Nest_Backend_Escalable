@@ -1,4 +1,8 @@
 {
     "workbench.iconTheme": "material-icon-theme",
-    "material-icon-theme.activeIconPack": "nest"
+    "material-icon-theme.activeIconPack": "nest",
+    "markdownlint.config": {
+        // Ignorar el error de uso de tags HTML en un archivo Markdown
+        "MD033": false
+    }
 }
