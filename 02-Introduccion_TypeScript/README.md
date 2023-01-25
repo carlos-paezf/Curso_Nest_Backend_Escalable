@@ -299,3 +299,61 @@ export const saurio = new Pokemon( 1, 'saurio' )
 saurio.scream()     // SAURIO!!!
 saurio.speak()      // saurio, saurio
 ```
+
+## Método Asíncronos
+
+Un método asíncrono es igual a una función normal, pero se realiza a destiempo, y retorna una promesa.
+
+```ts
+export class Pokemon {
+    ...
+    async getMoves () {
+        return 10
+    }
+}
+
+export const saurio = new Pokemon( 1, 'Bulbasaur' )
+
+console.log(saurio.getMoves())     // Promise {...}
+```
+
+Si queremos el valor que debe retornar, debemos usar el `.then()` o la palabra reservada `await`
+
+```ts
+export class Pokemon {
+    ...
+    async getMoves () {
+        return 10
+    }
+}
+
+export const saurio = new Pokemon( 1, 'Bulbasaur' )
+
+console.log(await saurio.getMoves())     // 10
+```
+
+Vamos a instalar Axios, el cual es un paquete que nos ayuda a la gestión de peticiones HTTP, para lo cual vamos usar el siguiente comando:
+
+```txt
+$: pnpm i axios
+```
+
+Ahora, vamos a realizar una petición a la API de pokemon, con el objetivo de obtener la información sobre los movimientos que tiene una instancia de pokemon:
+
+```ts
+import axios from "axios"
+
+
+export class Pokemon {
+    ...
+    async getMoves () {
+        const response = await axios.get( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
+        const { data: { moves } } = response
+        return moves
+    }
+}
+
+export const saurio = new Pokemon( 1, 'Bulbasaur' )
+
+console.log( await saurio.getMoves() )
+```
