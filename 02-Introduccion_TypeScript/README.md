@@ -357,3 +357,24 @@ export const saurio = new Pokemon( 1, 'Bulbasaur' )
 
 console.log( await saurio.getMoves() )
 ```
+
+## Colocar tipo de dato a respuestas HTTP (genéricos)
+
+En ocasiones el intellisense no nos ayuda con las respuestas que resuelven las peticiones HTTP. Para ayudarnos en esto necesitamos crear una interfaz con la estructura que debe tener la respuesta. Normalmente las API nos brinda en su documentación la estructura de su respuesta, pero si no es así, copiamos una respuesta a una petición y usamos la extensión Paste JSON as Code para crear de manera automática la interfaz dentro del archivo `interfaces/pokeapi-response.interface.ts`.
+
+Con las interfaces generadas, podemos hacer el tipado de la respuesta esperada:
+
+```ts
+...
+import { IPokeAPI, Move } from "../interfaces/pokeapi-response.interface"
+
+
+export class Pokemon {
+    ...
+    async getMoves (): Promise<Move[]> {
+        const response = await axios.get<IPokeAPI>( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
+        const { data: { moves } } = response
+        return moves
+    }
+}
+```

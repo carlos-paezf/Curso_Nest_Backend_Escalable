@@ -1,4 +1,5 @@
 import axios from "axios"
+import { IPokeAPI, Move } from "../interfaces/pokeapi-response.interface"
 
 export class Pokemon {
 
@@ -20,10 +21,10 @@ export class Pokemon {
         console.log( `${ this.name }, ${ this.name }` )
     }
 
-    async getMoves () {
-        const response = await axios.get( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
-        const { data } = response
-        return data
+    async getMoves (): Promise<Move[]> {
+        const response = await axios.get<IPokeAPI>( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
+        const { data: { moves } } = response
+        return moves
     }
 }
 
