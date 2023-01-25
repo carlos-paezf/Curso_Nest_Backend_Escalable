@@ -27,3 +27,7 @@ export const charmander: IPokemon = {
     name: 'charmander',
     age: 10
 }
+
+export const arr: IPokemon[] = []
+
+arr.push( saurio, charmander )

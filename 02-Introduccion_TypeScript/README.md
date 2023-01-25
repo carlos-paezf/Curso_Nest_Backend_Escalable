@@ -159,3 +159,19 @@ export const saurio: IPokemon = {
     age: undefined
 }
 ```
+
+## Tipos en arreglos
+
+Vamos a crear un arreglo, sin definir el tipo y sin tener valores iniciales.
+
+```ts
+const arr = []
+```
+
+El tipo del arreglo anterior será de tipo `never`, y si intentamos agregar un elemento de cualquier tipo al arreglo, vamos a obtener un error por incompatibilidad entre tipos. De nuevo, si queremos un arreglo tipado, podemos definir el tipo, una interface o un nuevo type. Ejemplo, si queremos un arreglo de pokemon, haríamos lo siguiente:
+
+```ts
+export const arr: IPokemon[] = []
+
+arr.push( saurio, charmander )
+```
