@@ -81,3 +81,81 @@ const variable: string | number | boolean | undefined | null | [] | {} = `valor`
 ```
 
 En los strings tenemos la opción de usar `""`, `''` o <code>``</code> para encerrar el valor del string. La diferencia radica en que por medio de la tercera forma, conocida como template string, podemos interpolar un valor mediante el uso de <code>${}</code>, como lo vimos en el ejemplo de la [lección anterior](README.md#tipos-y-bases-sobre-módulos)
+
+## Objetos e Interfaces
+
+Vamos a crear un nuevo archivo llamado `02-objects.ts` en que definimos un arreglo de tipo numérico, el cual será inferido por TS:
+
+```ts
+export const pokemonIds = [ 1, 2, 3, 4, 5 ]
+```
+
+Si intentamos agregar un string al arreglo, el linter nos dirá que es un error, pero TypeScript usará sin problema el arreglo, y esto se debe a la transpilación de TS a JS, en donde tal error está permitido
+
+```ts
+pokemonIds.push('10')   // No se puede asignar un argumento de tipo "string" al parámetro de tipo "number"
+
+console.log(pokemonIds)     // [ 1, 2, 3, 4, 5, '10' ]
+```
+
+La importancia de los tipos en TypeScript y el linter, es que mantenemos un código más ordena y con menos posibilidades de fallas. Si insistimos en guardar un string dentro del arreglo, debemos castearlo al tipo adecuado, por ejemplo:
+
+```ts
+pokemonIds.push(+'10')   
+pokemonIds.push(Number('11'))   
+
+console.log(pokemonIds)     // [ 1, 2, 3, 4, 5, 10, 11 ]
+```
+
+Con los objetos pasa algo interesante, y es que si no definimos el tipo de estructura, podemos añadir o remover sus keys sin ningún error, llegando a generar errores futuros en el código. Para evitar esto, se definen las interfaces:
+
+```ts
+export interface IPokemon {
+    id: number
+    name: string
+}
+
+export const saurio: IPokemon = {
+    id: 1,
+    name: "saurio"
+}
+```
+
+Si intentamos asignar un valor de tipo incorrecto, añadir o remover una propiedad, tendremos un error. Si queremos algo opcional podemos hacer lo siguiente:
+
+```ts
+export interface IPokemon {
+    ...
+    age?: number
+}
+
+export const saurio: IPokemon = {
+    id: 1,
+    name: "saurio"
+}
+
+export const charmander: IPokemon = {
+    id: 2,
+    name: 'charmander',
+    age: 10
+}
+```
+
+Algunos programadores definen el tipo de la propiedad de la siguiente manera:
+
+```ts
+export interface IPokemon {
+    ...
+    age: number | undefined
+}
+```
+
+En cuyo caso el valor de la propiedad puede ser un número o valor indefinido, pero no puede faltar la declaración de la propiedad, por ejemplo para el caso de mi pokemon saurio, el cual no tiene edad, con el anterior tipo de declaración debería verse de la siguiente manera:
+
+```ts
+export const saurio: IPokemon = {
+    id: 2,
+    name: 'saurio',
+    age: undefined
+}
+```
