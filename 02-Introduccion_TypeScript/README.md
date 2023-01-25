@@ -236,3 +236,66 @@ export const saurio = new Pokemon( 1, 'saurio' )
 saurio.id = 10                  // No se puede asignar a "id" porque es una propiedad de solo lectura.
 saurio.name = 'saurio-evo'      // ✅
 ```
+
+## Getters, métodos y THIS
+
+Con la clase de la lección anterior, vamos a añadir una propiedad más:
+
+```ts
+export class Pokemon {
+    constructor (
+        public readonly id: number,
+        public name: string,
+        public imageUrl: string
+    ) { }
+}
+
+
+export const saurio = new Pokemon( 1, 'saurio', 'https://imagen/1.jpg' )
+export const charmander = new Pokemon( 4, 'charmander', 'https://imagen/4.jpg' )
+```
+
+Podríamos decir que la imagen se obtiene en la misma URL, pero lo único que cambia es el identificador, por lo tango sería molesto enviar toda una cadena que lo único que cambia entre instancias es el id, allí es donde entran los getters. Un Getter nos permite retornar una nueva propiedad para la instancia, por ejemplo, podemos reemplazar la nueva propiedad por un getter que inyecte el valor de un elemento de la instancia de la clase mediante el `this`.
+
+```ts
+export class Pokemon {
+
+    get imageUrl (): string {
+        return `https://image/${ this.id }.jpg`
+    }
+
+    constructor (
+        public readonly id: number,
+        public name: string
+    ) { }
+}
+
+
+export const saurio = new Pokemon( 1, 'saurio' )
+export const charmander = new Pokemon( 4, 'charmander' )
+
+
+saurio.imageUrl         // https://imagen/1.jpg
+charmander.imageUrl     // https://imagen/4.jpg
+```
+
+Los métodos son funciones que tienen acceso a propiedades y otros métodos. Por ejemplo, queremos un método para que grite tu nombre, y otro para que "hable":
+
+```ts
+export class Pokemon {
+    ...
+    scream () {
+        console.log( `${ this.name.toUpperCase() }!!!` )
+    }
+
+    speak () {
+        console.log( `${ this.name }, ${ this.name }` )
+    }
+}
+
+export const saurio = new Pokemon( 1, 'saurio' )
+
+
+saurio.scream()     // SAURIO!!!
+saurio.speak()      // saurio, saurio
+```
