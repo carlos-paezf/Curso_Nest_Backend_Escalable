@@ -175,3 +175,64 @@ export const arr: IPokemon[] = []
 
 arr.push( saurio, charmander )
 ```
+
+## Clases y forma abreviada
+
+La mayoría de las piezas de Nest son clases. Vamos a crear un archivo llamado `03-classes.ts`. En OOP una clase se puede considerar como representación o abstracción de un objeto real. Hay 2 maneras de definir las propiedades en una clase:
+
+Definir el valor de propiedades por defecto:
+
+```ts
+export class Pokemon {
+    public id: number = 0
+    public name: string = 'no name'
+}
+
+
+export const unknownPokemon = new Pokemon()
+```
+
+O, al momento de crear una instancia de la clase definir el valor de la propiedad
+
+```ts
+export class Pokemon {
+    public id: number
+    public name: string
+
+    constructor ( id: number, name: string ) {
+        this.id = id
+        this.name = name
+    }
+}
+
+export const saurio = new Pokemon(1, 'saurio')
+```
+
+Para esta segunda forma, podemos hacer un reemplazo para compactarla y tener un código más limpio:
+
+```ts
+export class Pokemon {
+    constructor (
+        public id: number,
+        public name: string
+    ) { }
+}
+
+export const saurio = new Pokemon(1, 'saurio')
+```
+
+Cuando a una propiedad le agregamos la configuración de  `readonly` (muy común en la inyección de dependencias), podemos asignarle un valor, pero nunca más podemos volver a cambiarlo.
+
+```ts
+export class Pokemon {
+    constructor (
+        public readonly id: number,
+        public name: string
+    ) { }
+}
+
+export const saurio = new Pokemon( 1, 'saurio' )
+
+saurio.id = 10                  // No se puede asignar a "id" porque es una propiedad de solo lectura.
+saurio.name = 'saurio-evo'      // ✅
+```
