@@ -38,3 +38,27 @@ $: pnpm dev
 ```
 
 Con el proyecto corriendo podemos ir a la dirección `http://localhost:5173/` y observar el mensaje de bienvenida. Es importante que abramos la consola en las herramientas de desarrollador para observar los outputs que vamos a provocar.
+
+## Tipos y bases sobre módulos
+
+Vamos a crear un directorio dentro de `src`, y dentro del cual añadimos el archivo `bases/01-types.ts`. Ya que tenemos el linter activado por defecto, si no tenemos nada en el archivo, nos mostrará un error, para solucionarlos debemos importar o exportar algo.
+
+TypeScript infiere los tipos de las variables que creamos con un valor, pero si queremos ser más explícitos, declaramos el tipo de la siguiente manera:
+
+```ts
+export const name: string = "Ferrer"
+```
+
+Podemos usar nuestra variable dentro del archivo `main.ts` de la siguiente manera: Importamos el elemento de su archivo y luego lo incluimos en template string que se mostrará en la página.
+
+```ts
+import { name } from './bases/01-types'
+
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        <h1>Hello ${ name }</h1>
+    </div>
+`
+```
+
+Cuando tenemos un archivo en el que estamos exportando una variable, función o instancia, ya se puede considerar un módulo. Siempre es importante evitar escribir código como uso de funciones o por el estilo, puesto que esto hace que se tenga que ejecutar todo el archivo por un solo uso. Es preferible que los módulos solo sean usados para exportar declaraciones.
