@@ -39,3 +39,30 @@ O en su versión más corta:
 ```txt
 $: nest -v
 ```
+
+## Generar nuestro primer proyecto - CarDealership
+
+Vamos a crear nuestro primer proyecto en Nest, para lo cual usamos el siguiente comando:
+
+```txt
+$: nest new car-dealership
+```
+
+Seleccionamos el manejador de paquetes preferido (en mi caso pnpm), es esperamos el progreso de la instalación. Una vez se termine de crear el proyecto, nos dirigimos al directorio del mismo y lo levantamos en modo desarrollo con el comando:
+
+```txt
+$: pnpm start:dev
+```
+
+Por defecto Nest trabaja en el puerto 3000, por lo que podemos ir a `http://localhost:3000` y tener un mensaje de `Hello World!`. Cuando vayamos a modificar el código, si tenemos un formatter code diferente a Prettier, y no queremos que se generen conflictos con el linter por el formato, podemos personalizar las reglas del archivo `.prettierrc` o dentro del archivo `.eslintrc.js` eliminar la linea asociada con el formatter:
+
+```js
+module.exports = {
+    ...,
+    extends: [
+        'plugin:@typescript-eslint/recommended',
+        // 'plugin:prettier/recommended',
+    ],
+    ...,
+};
+```
