@@ -19,3 +19,23 @@ Adicionalmente estaremos creando un Rest Api inicial para ir explicando cada con
 ## ¿Qué es Nest? ¿Por qué usarlo?
 
 Nest es un marco de trabajo dogmático (opinionated), en el cual se sigue una determinada nomenclatura, file system, etc. Su forma estructurada nos permite mantener una aplicación más ordenada y file de soportar. Nest permite crear aplicaciones del lado del servidor con NodeJS y TypeScript. Nest está fuertemente inspirado en Angular, pero no es necesario saber de uno para aprender sobre el otro.
+
+## Instalar Nest CLI (Command Line Interface)
+
+Para instalar Nest CLI podemos usar el siguiente comando:
+
+```txt
+$: pnpm i -g @nestjs/cli
+```
+
+Verificamos la versión de Nest con el comando:
+
+```txt
+$: nest --version
+```
+
+O en su versión más corta:
+
+```txt
+$: nest -v
+```
