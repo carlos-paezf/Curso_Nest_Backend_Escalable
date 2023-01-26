@@ -79,3 +79,48 @@ module.exports = {
 - `dist/`: Almacena el producto final para la ejecución en desarrollo, o en producción.
 - `node_modules/`: Almacén de los paquetes necesarios para el proyecto
 - `test/`: Conserva los archivos dedicados al testing.
+
+## Módulos
+
+Dentro del directorio `src/` tenemos múltiples archivos, pero los vamos a borrar por que vamos a crearlos desde ceros, excepto el `app.module.ts` al cual vamos a dejar de la siguiente manera:
+
+```ts
+import { Module } from '@nestjs/common'
+
+
+@Module( {
+    imports: [],
+    controllers: [],
+    providers: [],
+    exports: []
+} )
+export class AppModule { }
+```
+
+Los módulos hacen parte de los ***Build Blocks***, y se encarga de agrupar y desacoplar un conjunto de funcionalidades específicas por dominio. En este caso `AppModule` es el módulo principal o root de la aplicación.
+
+El archivo `main.ts` tiene el punto de acceso principal de la aplicación, y en cual se crea el proyecto haciendo uso del módulo principal:
+
+```ts
+import { NestFactory } from '@nestjs/core'
+import { AppModule } from './app.module'
+
+
+async function bootstrap () {
+    const app = await NestFactory.create( AppModule )
+    await app.listen( 3000 )
+}
+bootstrap()
+```
+
+Como eliminamos el controlador y los servicios, los cuales se encargaban de la petición y respuesta a un endpoint, cuando levantemos la aplicación, vamos a tener un mensaje como el siguiente en el navegador:
+
+```json
+{
+    "statusCode": 404,
+    "message": "Cannot GET /",
+    "error": "Not Found"
+}
+```
+
+Normalmente hacemos las peticiones o pruebas de las mismas a través de un API Client como por ejemplo Postman, Thunder o RapidClient.
