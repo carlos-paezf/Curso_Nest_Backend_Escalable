@@ -378,3 +378,51 @@ export class Pokemon {
     }
 }
 ```
+
+## Inyección de dependencias
+
+La inyección de dependencias es un tema muy común dentro de el desarrollo en NestJS. En estos momentos tenemos una dependencia oculta de axios, y nosotros deberíamos poder cambiar fácilmente de mecanismo para realizar peticiones HTTP sin necesidad de afectar de manera directa muchas partes de nuestro código.
+
+Lo primero que vamos a hacer es crear un archivo llamado `api/pokeApi.adapter.ts`, dentro del cual tendremos una clase adaptadora que nos permita realizar modificaciones a ciertas funcionalidades implementadas dentro de nuestro proyecto, sin que tenga que afectar otras partes del mismo. Por ejemplo, si sale una nueva versión de un paquete, o alguna funcionalidad esta deprecated, o incluso si deseamos cambiar el paquete completo, todo debemos hacer la modificación en el adapter, y su implementación en el proyecto debe permanecer igual.
+
+```ts
+import axios from 'axios'
+
+export class PokeApiAdapter {
+    private readonly _axios = axios
+
+    async get ( url: string ) {
+        const { data } = await this._axios.get( url )
+        return data
+    }
+}
+```
+
+Ahora para realizar la inyección de dependencias dentro de clase de `Pokemon`, creamos una propiedad dentro de los params del constructor:
+
+```ts
+...
+import { PokeApiAdapter } from "../api/pokeApi.adapter"
+
+export class Pokemon {
+    ...
+    constructor (
+        ...,
+        private readonly _http: PokeApiAdapter
+    ) { }
+    ...
+    async getMoves (): Promise<Move[]> {
+        const data = await this._http.get( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
+        const { moves } = data
+        return moves
+    }
+}
+```
+
+Ahora, como tenemos una nuevo elemento dentro del constructor, debemos añadir una instancia del adaptador a la instancia del pokemon. Es importante recordar que dicha instancia del adaptador puede ser usada múltiples veces por otras instancias de Pokemon:
+
+```ts
+const pokeApi = new PokeApiAdapter()
+
+export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApi )
+```
