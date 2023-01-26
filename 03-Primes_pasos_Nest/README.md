@@ -66,3 +66,16 @@ module.exports = {
     ...,
 };
 ```
+
+## Explicación de cada archivo y directorio
+
+- `.eslintrc.js`: Archivo de configuración de linter para aplicación de buenas prácticas recomendadas por los creadores de Nest, procurando seguir ciertos standards
+- `.gitignore`: Archivo que nos permite ignorar ciertos archivos y directorios que no deben tener seguimiento en el repositorio.
+- `.prettierrc`: Archivo de configuración del formatter code Prettier
+- `nest-cli.json`: Configuraciones del CLI
+- `package.json`: Configuraciones generales del proyecto, tales como nombre, versión, scripts, dependencias de producción y de desarrollo, y la configuración de jest.
+- `tsconfig.build.json`: Archivo con las configuraciones de TypeScript para el build de producción
+- `tsconfig.json`: Establece las reglas con las que TypeScript se debe regir
+- `dist/`: Almacena el producto final para la ejecución en desarrollo, o en producción.
+- `node_modules/`: Almacén de los paquetes necesarios para el proyecto
+- `test/`: Conserva los archivos dedicados al testing.
