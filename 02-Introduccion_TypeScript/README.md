@@ -557,3 +557,114 @@ const pokeApiFetch = new PokeApiFetchAdapter()
 export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )        // ✅
 export const charmander = new Pokemon( 1, 'Charmander', pokeApiFetch )      // ✅
 ```
+
+## Decoradores
+
+Los decoradores son funciones que se usan con la sintaxis de `@<nombre del decorador>()`. Vamos a crear un decorador, pero primero debemos activar la funcionalidad de `experimentalDecorators` dentro del archivo `tsconfig.json`:
+
+```json
+{
+    "compilerOptions": {
+        ...,
+        "experimentalDecorators": true
+    },
+    ...
+}
+```
+
+Dentro del archivo `05-decorators.ts` creamos el decorador que retornar una función, la cual toma como parámetros un target de tipo `Function`:
+
+```ts
+const MyDecorator = () => {
+    return ( target: Function ) => {
+        console.log( target )
+    }
+}
+
+
+@MyDecorator()
+export class Pokemon {
+    constructor (
+        public readonly id: number,
+        public name: string
+    ) { }
+
+    scream () {
+        console.log( `${ this.name.toUpperCase() }!!!` )
+    }
+
+    speak () {
+        console.log( `${ this.name }, ${ this.name }` )
+    }
+}
+
+
+export const charmander = new Pokemon( 4, 'Charmander' )
+```
+
+Al momento de usar la instancia, podremos observar en consola el siguiente output:
+
+```txt
+class {
+  constructor(id, name) {
+    this.id = id;
+    this.name = name;
+  }
+  scream() {
+    ;
+    oo_oo(), console.log(`${this.name.toUpperCase()}!!!`, `39821d1_1`);
+  }
+  speak() {
+    ;
+    (oo_oo(),console.log(`${this.name}, ${this.name}`, `39821d1_2`));
+  }
+}
+```
+
+Un decorador tiene acceso a la definición de la clase, lo cual permite expandir, extender, añadir, remover o bloquear funcionalidades de la misma, incluso puede sobrescribir por completo toda la clase.
+
+Por ejemplo, los métodos de la clase original imprimen en consola un mensaje, pero mediante un decorador retornamos una nueva clase en la cual los métodos retornan un string:
+
+```ts
+class NewPokemon {
+    constructor (
+        public readonly id: number,
+        public name: string
+    ) { }
+
+    scream () {
+        return `NOOOOOOOOOOOOOOOO!!!`
+    }
+
+    speak () {
+        return `Silencio total`
+    }
+}
+
+
+const MyDecorator = () => {
+    return ( target: Function ) => {
+        return NewPokemon
+    }
+}
+
+
+@MyDecorator()
+export class Pokemon {
+    constructor (
+        public readonly id: number,
+        public name: string
+    ) { }
+
+    scream () {
+        console.log( `${ this.name.toUpperCase() }!!!` )
+    }
+
+    speak () {
+        console.log( `${ this.name }, ${ this.name }` )
+    }
+}
+
+
+export const charmander = new Pokemon( 4, 'Charmander' )
+```
