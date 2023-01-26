@@ -668,3 +668,56 @@ export class Pokemon {
 
 export const charmander = new Pokemon( 4, 'Charmander' )
 ```
+
+## Decorador de método `@Deprecated`
+
+Vamos a crear un decorador que lancé una alerta por consola, anunciado qu el método está en desuso y el motivo por el cual lo está.
+
+```ts
+const Deprecated = ( deprecationReason: string ) => {
+    return ( target: any, memberName: string, propertyDescriptor: PropertyDescriptor ) => {
+        return {
+            get () {
+                const wrapperFn = ( ...args: any[] ) => {
+                    console.warn( `Method ${ memberName } is deprecated with reason: ${ deprecationReason }` )
+                }
+                return wrapperFn
+            }
+        }
+    }
+}
+```
+
+Podemos usar este decorador en una función, la cual no se podrá ejecutar:
+
+```ts
+export class Pokemon {
+    ...
+    @Deprecated( "Most use speak2 method instead" )
+    speak () {
+        console.log( `${ this.name }, ${ this.name }` )
+    }
+
+    speak2 () {
+        return `${ this.name }, ${ this.name } 🐾`
+    }
+}
+```
+
+Si queremos permitir la ejecución del método sobre el que se pone el decorador, añadimos una línea más dentro de la propiedad `wrapperFn`
+
+```ts
+const Deprecated = ( deprecationReason: string ) => {
+    return ( target: any, memberName: string, propertyDescriptor: PropertyDescriptor ) => {
+        return {
+            get () {
+                const wrapperFn = ( ...args: any[] ) => {
+                    console.warn( `Method ${ memberName } is deprecated with reason: ${ deprecationReason }` )
+                    propertyDescriptor.value.apply( this, args )
+                }
+                return wrapperFn
+            }
+        }
+    }
+}
+```
