@@ -503,3 +503,57 @@ const pokeApiFetch = new PokeApiFetchAdapter()
 export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )    // ✅
 export const charmander = new Pokemon( 1, 'Charmander', pokeApiFetch )  // No se puede asignar un argumento de tipo "PokeApiFetchAdapter" al parámetro de tipo "PokeApiAxiosAdapter".
 ```
+
+## Resolver el principio de sustitución
+
+Partimos con el error de la lección anterior. Una manera de solucionar el error es mediante un `abstract class`, pero en Nest no solemos usarlas. La manera que si solemos implementar es a través de una `interface`:
+
+```ts
+export interface HttpAdapter {
+    get<T> ( url: string ): Promise<T>
+}
+```
+
+Ahora, las clases adaptadoras deben implementar la interfaz:
+
+```ts
+export class PokeApiFetchAdapter implements HttpAdapter {
+    async get<T> ( url: string ): Promise<T> {
+        const response = await fetch( url )
+        const data: T = await response.json()
+        return data
+    }
+}
+
+
+export class PokeApiAxiosAdapter implements HttpAdapter {
+    private readonly _axios = axios
+
+    async get<T> ( url: string ): Promise<T> {
+        const { data } = await this._axios.get<T>( url )
+        return data
+    }
+}
+```
+
+De esta manera logramos una estructura común para los adaptadores, lo cual nos permitirá hacer una inyección transparente dentro de la clase de Pokemon:
+
+```ts
+...
+import { HttpAdapter, PokeApiAxiosAdapter, PokeApiFetchAdapter } from '../api/pokeApi.adapter'
+
+export class Pokemon {
+    ...
+    constructor (
+        ...,
+        private readonly _http: HttpAdapter
+    ) { }
+    ...
+}
+
+const pokeApiAxios = new PokeApiAxiosAdapter()
+const pokeApiFetch = new PokeApiFetchAdapter()
+
+export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )        // ✅
+export const charmander = new Pokemon( 1, 'Charmander', pokeApiFetch )      // ✅
+```

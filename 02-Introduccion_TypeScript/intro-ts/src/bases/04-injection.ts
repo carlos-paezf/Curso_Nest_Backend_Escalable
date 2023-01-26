@@ -1,4 +1,4 @@
-import { PokeApiAxiosAdapter, PokeApiFetchAdapter } from '../api/pokeApi.adapter'
+import { HttpAdapter, PokeApiAxiosAdapter, PokeApiFetchAdapter } from '../api/pokeApi.adapter'
 import { IPokeAPI, Move } from "../interfaces/pokeapi-response.interface"
 
 export class Pokemon {
@@ -10,7 +10,7 @@ export class Pokemon {
     constructor (
         public readonly id: number,
         public name: string,
-        private readonly _http: PokeApiAxiosAdapter
+        private readonly _http: HttpAdapter
     ) { }
 
 
@@ -32,5 +32,5 @@ export class Pokemon {
 const pokeApiAxios = new PokeApiAxiosAdapter()
 const pokeApiFetch = new PokeApiFetchAdapter()
 
-// export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )
-export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiFetch )
+export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )
+export const charmander = new Pokemon( 1, 'Charmander', pokeApiFetch )
