@@ -1,5 +1,4 @@
-import axios from "axios"
-import { PokeApiAdapter } from "../api/pokeApi.adapter"
+import { PokeApiAxiosAdapter, PokeApiFetchAdapter } from '../api/pokeApi.adapter'
 import { IPokeAPI, Move } from "../interfaces/pokeapi-response.interface"
 
 export class Pokemon {
@@ -11,7 +10,7 @@ export class Pokemon {
     constructor (
         public readonly id: number,
         public name: string,
-        private readonly _http: PokeApiAdapter
+        private readonly _http: PokeApiAxiosAdapter
     ) { }
 
 
@@ -24,12 +23,14 @@ export class Pokemon {
     }
 
     async getMoves (): Promise<Move[]> {
-        const data = await this._http.get( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
+        const data = await this._http.get<IPokeAPI>( `https://pokeapi.co/api/v2/pokemon/${ this.id }` )
         const { moves } = data
         return moves
     }
 }
 
-const pokeApi = new PokeApiAdapter()
+const pokeApiAxios = new PokeApiAxiosAdapter()
+const pokeApiFetch = new PokeApiFetchAdapter()
 
-export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApi )
+// export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )
+export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiFetch )

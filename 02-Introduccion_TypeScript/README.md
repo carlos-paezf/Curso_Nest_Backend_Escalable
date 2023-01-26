@@ -426,3 +426,80 @@ const pokeApi = new PokeApiAdapter()
 
 export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApi )
 ```
+
+## Genéricos + Sustitución de Liskov
+
+Nest recomienda altamente el uso de los principios SOLID, puesto que permite un código más tolerable al cambio y más fácil de sostener. En estos momentos estamos aplicando el patrón adaptador, pero estamos retornando una información de tipo `any`, y necesitamos indicarle que tipo de data debe retornar. Para crear el genérico dentro del adaptador hacemos lo siguiente:
+
+```ts
+export class PokeApiAdapter {
+    ...
+    async get<T> ( url: string ): Promise<T> {
+        const { data } = await this._axios.get<T>( url )
+        return data
+    }
+}
+```
+
+Al momento de llamar el método hacemos lo siguiente:
+
+```ts
+...
+import { IPokeAPI, ... } from "../interfaces/pokeapi-response.interface"
+
+export class Pokemon {
+    ...
+    async getMoves (): Promise<Move[]> {
+        const data = await this._http.get<IPokeAPI>( `...${ this.id }` )
+        const { moves } = data
+        return moves
+    }
+}
+```
+
+La sustitución de Liskov define que cada clase que hereda de otra, puede usarse como su padre sin necesidad de conocer las diferencias entre ellas. Es decir, la clase Pokemon no debería estar amarrada a una implementación en especifico de la clase adaptadora. Podríamos poder tener varias implementaciones del método get y cambiar sin problema el que queremos usar sin alterar la clase de Pokemon.
+
+Por ejemplo tenemos los adaptadores para peticiones con Fetch y con Axios:
+
+```ts
+export class PokeApiFetchAdapter {
+    async get<T> ( url: string ): Promise<T> {
+        const response = await fetch( url )
+        const data: T = await response.json()
+        return data
+    }
+}
+
+
+export class PokeApiAxiosAdapter {
+    private readonly _axios = axios
+
+    async get<T> ( url: string ): Promise<T> {
+        const { data } = await this._axios.get<T>( url )
+        return data
+    }
+}
+```
+
+En nuestra clase de Pokemon podríamos crear la instancia de cualquiera de los dos adaptadores y aceptarlo sin ningún inconveniente. Como actualmente la inyección de la dependencia tiene una clase especifica, obtendremos un error:
+
+```ts
+...
+import { PokeApiAxiosAdapter, PokeApiFetchAdapter } from '../api/pokeApi.adapter'
+
+export class Pokemon {
+    ...
+    constructor (
+        public readonly id: number,
+        public name: string,
+        private readonly _http: PokeApiAxiosAdapter
+    ) { }
+    ...
+}
+
+const pokeApiAxios = new PokeApiAxiosAdapter()
+const pokeApiFetch = new PokeApiFetchAdapter()
+
+export const bulbasaur = new Pokemon( 1, 'Bulbasaur', pokeApiAxios )    // ✅
+export const charmander = new Pokemon( 1, 'Charmander', pokeApiFetch )  // No se puede asignar un argumento de tipo "PokeApiFetchAdapter" al parámetro de tipo "PokeApiAxiosAdapter".
+```
