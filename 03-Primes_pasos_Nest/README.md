@@ -192,3 +192,60 @@ export class CarsController {
     }
 }
 ```
+
+## Obtener un carro por ID
+
+Vamos a hacer una pequeña modificación al controlador de la lección anterior:
+
+```ts
+import { Controller, Get } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController {
+
+    private _cars = [ 'Toyota', 'Honda', 'Jeep' ]
+
+    @Get()
+    getAllCars () {
+        return this._cars
+    }
+}
+```
+
+Ahora, vamos ha crear un método que nos regrese el elemento n del arreglo de carros cuando hagamos una petición al endpoint `http://localhost:3000/cars/n`:
+
+```ts
+import { Controller, Get, Param } from '@nestjs/common'
+
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id' ) id: number ) {
+        return {
+            id,
+            data: this._cars.at( id )
+        }
+    }
+}
+```
+
+Por defecto cualquier query params será recibido como un string, pero podemos mapear el parámetro mediante un pipe llamado `ParseIntPipe`, siempre y cuando el valor se pueda convertir en un número:
+
+```ts
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common'
+
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id', ParseIntPipe ) id: number ) {
+        return {
+            id,
+            data: this._cars.at( id )
+        }
+    }
+}
+```
