@@ -249,3 +249,62 @@ export class CarsController {
     }
 }
 ```
+
+## Servicios
+
+En este momento la data está dentro del controlador, lo cual hace que no podamos inyectar de manera simple la información en otros lugares. Los servicios alojan la lógica de negocio de tal manera que sea reutilizable mediante inyección de dependencias, todos los servicios son providers, pero no todos los providers son servicios. Los providers son clases que se pueden inyectar como una dependencia, esto significa que puede crear varias relaciones entre si.
+
+Para crear un servicio sin archivo de testing, usamos el siguiente acceso:
+
+```txt
+$: nest g s cars --no-spec
+```
+
+El archivo que se crea tiene la siguiente estructura:
+
+```ts
+import { Injectable } from '@nestjs/common';
+
+@Injectable()
+export class CarsService {}
+```
+
+Además, dentro del módulo `CarsModule` tenemos que el decorador se actualiza con lo siguiente:
+
+```ts
+...
+import { CarsService } from './cars.service';
+
+@Module( {
+    ...,
+    providers: [ CarsService ]
+} )
+export class CarsModule { }
+```
+
+Dentro del nuevo servicio vamos a mover la data de los carros:
+
+```ts
+@Injectable()
+export class CarsService {
+    private _cars = [
+        {
+            id: 1,
+            brand: 'Toyota',
+            model: 'Corolla'
+        },
+        {
+            id: 2,
+            brand: 'Honda',
+            model: 'Civic'
+        },
+        {
+            id: 3,
+            brand: 'Jeep',
+            model: 'Cherokee'
+        }
+    ]
+}
+```
+
+Ahora que no tenemos la data en el controlador, vamos a tener varios errores ya que no reconoce de donde debe sacar la información. En la siguiente lección vamos a ver la inyección de dependencias.

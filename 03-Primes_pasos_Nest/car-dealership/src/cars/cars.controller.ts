@@ -4,8 +4,6 @@ import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common'
 @Controller( 'cars' )
 export class CarsController {
 
-    private _cars = [ 'Toyota', 'Honda', 'Jeep' ]
-
     @Get()
     getAllCars () {
         return this._cars
