@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common'
 import { CarsService } from './cars.service'
 
 
@@ -13,14 +13,14 @@ export class CarsController {
     }
 
     @Get( ':id' )
-    getCarById ( @Param( 'id' ) id: string ) {
-        const data = this._carsService.findOneById( id )
+    getCarById ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string ) {
+        const data = this._carsService.findOneById( uuid )
 
         if ( !data || !Object.keys( data ).length )
-            throw new NotFoundException( `Car with id ${ id } not found` )
+            throw new NotFoundException( `Car with id ${ uuid } not found` )
 
         return {
-            id,
+            id: uuid,
             data
         }
     }
@@ -35,20 +35,20 @@ export class CarsController {
     }
 
     @Patch( ':id' )
-    updateCar ( @Param( 'id' ) id: string, @Body() body: any ) {
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() body: any ) {
         return {
             ok: true,
             method: 'PATCH',
-            id, body
+            id: uuid, body
         }
     }
 
     @Delete( ':id' )
-    deleteCar ( @Param( 'id' ) id: string ) {
+    deleteCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string ) {
         return {
             ok: true,
             method: 'DELETE',
-            id
+            id: uuid
         }
     }
 }

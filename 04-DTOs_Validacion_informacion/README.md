@@ -72,3 +72,35 @@ export class CarsService {
 ```
 
 También debemos tener en cuenta que los parámetros en los métodos del controlador también deben cambiar el tipo que esperan, puesto que ya no queremos enteros sino una cadena de uuid, el cual vamos a validar mediante un ppe en la siguiente lección.
+
+## Pipe - ParseUUIDPipe
+
+Siempre debemos validar que la información que le enviamos a la base de datos sea información valida, por ello la relevancia de validar los params de las peticiones. En este caso vamos usar el pipe `ParseUUIDPipe` en los métodos del controlador en los que se requiere usar un id:
+
+```ts
+...
+import { ..., ParseUUIDPipe } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id', ParseUUIDPipe ) id: string ) {...}
+    ...
+}
+```
+
+En estos momentos estamos usando la versión 4 de UUID, y podemos especificar dicha versión dentro del pipe, pero en este caso necesitamos crear una instancia del pipe para establecer la configuración:
+
+```ts
+...
+import { ..., ParseUUIDPipe } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id', new ParseUUIDPipe({ version: '4' }) ) id: string ) {...}
+    ...
+}
+```
