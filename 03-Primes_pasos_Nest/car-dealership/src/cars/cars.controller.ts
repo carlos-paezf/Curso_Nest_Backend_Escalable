@@ -1,4 +1,4 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common'
+import { Controller, Get, NotFoundException, Param, ParseIntPipe } from '@nestjs/common'
 import { CarsService } from './cars.service'
 
 
@@ -14,9 +14,14 @@ export class CarsController {
 
     @Get( ':id' )
     getCarById ( @Param( 'id', ParseIntPipe ) id: number ) {
+        const data = this._carsService.findOneById( id )
+
+        if ( !data || !Object.keys( data ).length )
+            throw new NotFoundException( `Car with id ${ id } not found` )
+
         return {
             id,
-            data: this._carsService.findOneById( id )
+            data
         }
     }
 }

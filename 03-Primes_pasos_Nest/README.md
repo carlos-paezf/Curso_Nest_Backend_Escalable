@@ -434,3 +434,67 @@ export class CarsController {
     }
 }
 ```
+
+## Exception Filters
+
+Los Exception Filter hace parte de los Building Blocks y maneja los errores de código en mensajes de respuesta HTTP. Usualmente Nest ya incluye todos los casos de uso comunes, pero sse pueden expandir basado en las necesidades.
+
+Vamos a usar el código de error 404, el cual se ve representado en el recurso `NotFoundException`, el cual aplicaremos en el caso de que no se encuentre un carro cuando hacen la petición de búsqueda por id:
+
+```ts
+...
+import { ..., NotFoundException } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id', ParseIntPipe ) id: number ) {
+        const data = this._carsService.findOneById( id )
+
+        if ( !data || !Object.keys( data ).length ) {
+            throw new NotFoundException()
+        }
+
+        return {
+            id,
+            data
+        }
+    }
+}
+```
+
+Al momento de enviar una petición con un id que no existe, tendremos la siguiente respuesta:
+
+```json
+{
+    "statusCode": 404,
+    "message": "Not Found"
+}
+```
+
+Si queremos un mensaje más descriptivo podemos hacer lo siguiente:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Get( ':id' )
+    getCarById ( @Param( 'id', ParseIntPipe ) id: number ) {
+        ...
+        if ( !data || !Object.keys( data ).length ) 
+            throw new NotFoundException( `Car with id ${ id } not found` )
+        ...
+    }
+}
+```
+
+Con ello obtenemos la siguiente respuesta:
+
+```json
+{
+    "statusCode": 404,
+    "message": "Car with id 6 not found",
+    "error": "Not Found"
+}
+```
