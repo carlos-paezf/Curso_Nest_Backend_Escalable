@@ -24,3 +24,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 
 - [Sección 02: Breve introducción a TypeScript y conocimientos generales básicos](02-Introduccion_TypeScript/README.md)
 - [Sección 03: Primeros pasos en Nest](03-Primes_pasos_Nest/README.md)
+- [Sección 04: DTOs y Validación de información](04-DTOs_Validacion_informacion/README.md)
