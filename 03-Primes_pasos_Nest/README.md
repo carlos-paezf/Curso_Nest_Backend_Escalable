@@ -308,3 +308,54 @@ export class CarsService {
 ```
 
 Ahora que no tenemos la data en el controlador, vamos a tener varios errores ya que no reconoce de donde debe sacar la información. En la siguiente lección vamos a ver la inyección de dependencias.
+
+## Inyección de dependencias
+
+Para hacer la inyección del servicio, necesitamos definir una propiedad dentro del constructor del controlador:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    constructor ( private readonly _carsService: CarsService ) { }
+    ...
+}
+```
+
+Cómo la data está privada dentro del servicio, no podemos acceder a ella dentro del controlador, por lo tanto vamos a crear métodos en el servicios que nos permitan realizar acciones que sean llamadas por el controller:
+
+```ts
+@Injectable()
+export class CarsService {
+    ...
+    public findAll () {
+        return [ ...this._cars ]
+    }
+
+    public findOneById ( id: number ) {
+        return { ...this._cars.find( car => car.id === id ) }
+    }
+}
+```
+
+Ahora dentro del controlador, las llamamos de la siguiente manera:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+
+    constructor ( private readonly _carsService: CarsService ) { }
+
+    @Get()
+    getAllCars () {
+        return this._carsService.findAll()
+    }
+
+    @Get( ':id' )
+    getCarById ( @Param( 'id', ParseIntPipe ) id: number ) {
+        return {
+            id,
+            data: this._carsService.findOneById( id )
+        }
+    }
+}
+```

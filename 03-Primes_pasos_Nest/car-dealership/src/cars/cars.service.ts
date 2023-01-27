@@ -20,4 +20,11 @@ export class CarsService {
         }
     ]
 
+    public findAll () {
+        return [ ...this._cars ]
+    }
+
+    public findOneById ( id: number ) {
+        return { ...this._cars.find( car => car.id === id ) }
+    }
 }
