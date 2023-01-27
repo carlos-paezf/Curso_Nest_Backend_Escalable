@@ -97,7 +97,7 @@ import { Module } from '@nestjs/common'
 export class AppModule { }
 ```
 
-Los módulos hacen parte de los ***Build Blocks***, y se encarga de agrupar y desacoplar un conjunto de funcionalidades específicas por dominio. En este caso `AppModule` es el módulo principal o root de la aplicación.
+Los módulos hacen parte de los ***Build Blocks***, y se encarga de agrupar y desacoplar un conjunto de funcionalidades específicas por dominio. En este caso `AppModule` es el módulo principal o root de la aplicación. Pese a ser una clase normal, logramos convertirlo en módulo mediante el decorador `@Module()`
 
 El archivo `main.ts` tiene el punto de acceso principal de la aplicación, y en cual se crea el proyecto haciendo uso del módulo principal:
 
@@ -124,3 +124,71 @@ Como eliminamos el controlador y los servicios, los cuales se encargaban de la p
 ```
 
 Normalmente hacemos las peticiones o pruebas de las mismas a través de un API Client como por ejemplo Postman, Thunder o RapidClient.
+
+## Controladores
+
+Los controladores se encargan de escuchar la solicitud a un endpoint y de emitir una respuesta. Para crear un controlador, podemos hacerlo de manera manual, creando un archivo, la clase asignarle el decorador, y luego enviar la referencia de la clase al módulo que lo contiene, o, lo podemos hacer mediante el CLI con el siguiente comando:
+
+```txt
+$: nest generate controller <nombre del controlador>
+```
+
+Para nuestro proyecto vamos a estar manejando una estructura de módulos, por lo que primero creamos un módulo con el siguiente comando (usare las comandos cortos):
+
+```txt
+$: nest g mo cars
+```
+
+Con el anterior comando creamos un directorio y dentro un archivo, el cual es llamado en la propiedad `imports` del decorador `@Module()` del módulo principal:
+
+```ts
+import { Module } from '@nestjs/common'
+import { CarsModule } from './cars/cars.module';
+
+@Module( {
+    imports: [ CarsModule ]
+} )
+export class AppModule { }
+```
+
+Ahora, creamos un controlador dentro del nuevo módulo con el siguiente comando (al usar el mismo nombre del directorio y módulo, se va a crear el archivo dentro del directorio `cars` y se va a actualizar el archivo `cars.module.ts`):
+
+```txt
+$: nest g co cars
+```
+
+Una vez creado el archivo, podremos observar que en `cars.module.ts` tendremos lo siguiente:
+
+```ts
+import { Module } from '@nestjs/common'
+import { CarsController } from './cars.controller'
+
+@Module( {
+    controllers: [ CarsController ]
+} )
+export class CarsModule { }
+```
+
+Y el controlador se verá inicialmente de la siguiente manera, y recordemos que se considera controlador gracias al decorador `@Controller()`:
+
+```ts
+import { Controller } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController { }
+```
+
+Si nos fijamos en el decorador, tenemos el string `cars`, lo cual significa que el controlador será llamado cada que el endpoint al que se le hace la petición contenga un segmento con dicho string, por ejemplo: `http://localhost:3000/cars`. Ahora, para definir una respuesta cuando se haga una petición GET a dicho endpoint definimos lo siguiente:
+
+```ts
+import { Controller, Get } from '@nestjs/common'
+
+@Controller( 'cars' )
+export class CarsController {
+
+    @Get()
+    getAllCars () {
+        return [ 'Toyota', 'Honda', 'Jeep' ]
+    }
+}
+```
