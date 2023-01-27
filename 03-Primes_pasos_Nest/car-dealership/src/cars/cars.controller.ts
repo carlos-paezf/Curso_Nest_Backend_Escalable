@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param, ParseIntPipe } from '@nestjs/common'
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseIntPipe, Patch, Post } from '@nestjs/common'
 import { CarsService } from './cars.service'
 
 
@@ -22,6 +22,33 @@ export class CarsController {
         return {
             id,
             data
+        }
+    }
+
+    @Post()
+    createCar ( @Body() body: any ) {
+        return {
+            ok: true,
+            method: 'POST',
+            body
+        }
+    }
+
+    @Patch( ':id' )
+    updateCar ( @Param( 'id', ParseIntPipe ) id: number, @Body() body: any ) {
+        return {
+            ok: true,
+            method: 'PATCH',
+            id, body
+        }
+    }
+
+    @Delete( ':id' )
+    deleteCar ( @Param( 'id', ParseIntPipe ) id: number ) {
+        return {
+            ok: true,
+            method: 'DELETE',
+            id
         }
     }
 }

@@ -498,3 +498,52 @@ Con ello obtenemos la siguiente respuesta:
     "error": "Not Found"
 }
 ```
+
+## Post, Patch y Delete
+
+Vamos a terminar un CRUD en nuestro proyecto. Tanto para el método POST como el método PATCH, tenemos que recibir un body, para lo caul usamos el decorador `@Body()`, por ejemplo, sin hacer uso de servicios aún tendríamos algo como lo siguiente:
+
+```ts
+import { ..., Body, Patch, Post } from '@nestjs/common'
+...
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Post()
+    createCar ( @Body() body: any ) {
+        return {
+            ok: true,
+            body
+        }
+    }
+
+    @Patch( ':id' )
+    updateCar ( @Param( 'id', ParseIntPipe ) id: number, @Body() body: any ) {
+        return {
+            ok: true,
+            id, body
+        }
+    }
+}
+```
+
+Para el método DELETE hacemos algo similar:
+
+```ts
+import { ..., Delete } from '@nestjs/common'
+...
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Delete( ':id' )
+    deleteCar ( @Param( 'id', ParseIntPipe ) id: number ) {
+        return {
+            ok: true,
+            method: 'DELETE',
+            id
+        }
+    }
+}
+```
