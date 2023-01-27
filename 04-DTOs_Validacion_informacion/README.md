@@ -23,3 +23,52 @@ Para levantar el proyecto en modo desarrollo usamos el siguiente comando:
 ```txt
 $: pnpm start:dev
 ```
+
+## Interfaces y UUID
+
+En estos momentos podemos enviar lo que queramos desde el cliente hacía el backend, y el back no lo está ni validando ni usando. Lo primero que haremos es crear una interfaz para establecer una estructura común para los datos, dicha interfaz va a estar en el archivo `cars/interfaces/cars.interface.ts`:
+
+```ts
+export interface ICar {
+    id: number
+    brand: string
+    model: string
+}
+```
+
+Luego dentro del servicio definimos el tipo de dato para el arreglo:
+
+```ts
+export class CarsService {
+    private _cars: ICar[] = [...]
+    ...
+}
+```
+
+Los id numéricos son comunes en bases de datos, pero es un tanto mejor trabajar con ids de tipo UUID (Universally Unique Identifier), por tal motivo vamos a instalar el paquete `uuid` con los siguientes comandos (el paquete está escrito en JS, pero tiene la disposición de tipado para TS):
+
+```txt
+$: pnpm i -S uuid
+$: pnpm i -D @types/uuid
+```
+
+Cabe resaltar que ahora nuestra interfaz cambiara el tipo del id, de número pasará a string. Con el paquete listo, vamos a llamar el paquete dentro del servicio:
+
+```ts
+import { v4 as uuid } from 'uuid'
+...
+
+@Injectable()
+export class CarsService {
+    private _cars: ICar[] = [
+        {
+            id: uuid(),
+            ...
+        },
+        ...
+    ]
+    ...
+}
+```
+
+También debemos tener en cuenta que los parámetros en los métodos del controlador también deben cambiar el tipo que esperan, puesto que ya no queremos enteros sino una cadena de uuid, el cual vamos a validar mediante un ppe en la siguiente lección.
