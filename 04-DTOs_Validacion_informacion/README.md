@@ -104,3 +104,40 @@ export class CarsController {
     ...
 }
 ```
+
+## DTO - Data Transfer Object
+
+Actualmente en las peticiones de POST y PATCH están recibiendo un body de tipo any, debemos obligar al cliente de la api que envíe una estructura exacta de la data. Una manera de validar los datos es mediante los pipes, pero sería complicado por qué se tendrían muchos pipes, en cambio el concepto de DTO es más apropiado para nuestro problema. Creamos una clase que define la estructura de los datos, y aunque una interfaz puede parecer que también ayuda, con los DTOs definimos muchas reglas sobre los campos incluyendo la validación de los mismos.
+
+Vamos a crear el archivo `cars/dto/create-car.dto.ts` en el cual tendremos lo siguiente (las propiedades son de tipo `readonly` puesto que no queremos que se pueda modificar durante una acción luego de ser enviada por el cliente):
+
+```ts
+export class CreateCarDTO {
+    readonly brand!: string
+
+    readonly model!: string
+}
+```
+
+Ahora dentro del controlador, en el método de creación vamos a declarar que el body sea de tipo `CreateCarDTO`:
+
+```ts
+import { CreateCarDTO } from './dto/create-car.dto'
+...
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Post()
+    createCar ( @Body() createCarDTO: CreateCarDTO ) {
+        return {
+            ok: true,
+            method: 'POST',
+            data: createCarDTO
+        }
+    }
+    ...
+}
+```
+
+Es importante aclarar que aún no hemos aplicado validaciones, solo creamos la clase base o guía.
