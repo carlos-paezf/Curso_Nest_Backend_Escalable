@@ -36,11 +36,12 @@ export class CarsController {
     }
 
     @Patch( ':id' )
-    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() updateCartDTO: UpdateCarDTO ) {
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() updateCarDTO: UpdateCarDTO ) {
+        const data = this._carsService.update( uuid, updateCarDTO )
         return {
             ok: true,
             method: 'PATCH',
-            id: uuid, body: updateCartDTO
+            data
         }
     }
 

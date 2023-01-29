@@ -335,7 +335,7 @@ import { UpdateCarDTO } from './dto/update-car.dto'
 export class CarsController {
     ...
     @Patch( ':id' )
-    updateCar ( ..., @Body() updateCartDTO: UpdateCarDTO ) { ... }
+    updateCar ( ..., @Body() updateCarDTO: UpdateCarDTO ) { ... }
     ...
 }
 ```
@@ -345,4 +345,73 @@ Podemos agrupar la exportación de los 2 clases DTOs dentro de un archivo `index
 ```ts
 export { CreateCarDTO } from "./create-car.dto"
 export { UpdateCarDTO } from './update-car.dto'
+```
+
+## Actualizar el listado de carros
+
+Vamos a crear el método en el servicio para actualizar el carro:
+
+```ts
+@Injectable()
+export class CarsService {
+    ...
+    public update ( id: string, updateCarDTO: UpdateCarDTO ) {
+        let carData = this.findOneById( id )
+        this._cars = this._cars.map( car => {
+            if ( car.id === id ) {
+                carData = { ...carData, ...updateCarDTO, id }
+                return carData
+            }
+            return car
+        } )
+        return carData
+    }
+}
+```
+
+Luego llamamos este nuevo método dentro de la función del controlador:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Patch( ':id' )
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() updateCarDTO: UpdateCarDTO ) {
+        const data = this._carsService.update( uuid, updateCarDTO )
+        return {
+            ok: true,
+            method: 'PATCH',
+            data
+        }
+    }
+    ...
+}
+```
+
+Ahora cuando hacemos la petición, debemos usar el id del elemento que queremos actualizar y posteriormente definir la(s) propiedad(es) que se deben actualizar. Cómo estamos permitiendo que se envíe el id dentro del Body, podemos hacer un control para validar que el tanto el que se recibe por parámetro, como el que se recibe por body, sean iguales:
+
+```ts
+import { BadRequestException, ... } from '@nestjs/common'
+...
+
+@Injectable()
+export class CarsService {
+    ...
+    public update ( id: string, updateCarDTO: UpdateCarDTO ) {
+        let carData = this.findOneById( id )
+
+        if ( updateCarDTO.id && updateCarDTO.id !== id )
+            throw new BadRequestException( `Car id is not valid inside body` )
+
+        this._cars = this._cars.map( car => {
+            if ( car.id === id ) {
+                carData = { ...carData, ...updateCarDTO, id }
+                return carData
+            }
+            return car
+        } )
+
+        return carData
+    }
+}
 ```
