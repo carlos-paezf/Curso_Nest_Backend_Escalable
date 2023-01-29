@@ -301,3 +301,48 @@ export class CarsController {
 ```
 
 Con lo anterior logramos crear un nuevo elemento dentro del arreglo con la data que se envió mediante el body, pero con un id de tipo UUID que se define al momento de enviar la nueva información al arreglo general.
+
+## Actualizar un carro
+
+Vamos a implementar la función de actualización. Lo primero que necesitamos es crear un DTO en el que definamos las propiedades del objeto que se espera y que son opcionales, para ello creamos el archivo `dto/update-car.dto.ts`. Hacemos esto, puesto que, no es necesario que nos envíen todo un objeto con solo unas pocas modificaciones, es preferible que solo nos envíen las propiedades necesarias:
+
+```ts
+import { IsOptional, IsString, IsUUID } from "class-validator"
+
+export class UpdateCarDTO {
+    @IsOptional()
+    @IsString()
+    @IsUUID()
+    readonly id?: string
+
+    @IsOptional()
+    @IsString()
+    readonly brand?: string
+
+    @IsOptional()
+    @IsString()
+    readonly model?: string
+}
+```
+
+Dentro del método del controlador vamos a definir el tipo de la data que esperamos recibir en la petición dentro del body de la misma:
+
+```ts
+import { UpdateCarDTO } from './dto/update-car.dto'
+...
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Patch( ':id' )
+    updateCar ( ..., @Body() updateCartDTO: UpdateCarDTO ) { ... }
+    ...
+}
+```
+
+Podemos agrupar la exportación de los 2 clases DTOs dentro de un archivo `index.ts`, al cual llamamos archivo barril:
+
+```ts
+export { CreateCarDTO } from "./create-car.dto"
+export { UpdateCarDTO } from './update-car.dto'
+```

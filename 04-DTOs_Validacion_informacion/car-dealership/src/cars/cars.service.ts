@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { v4 as uuid } from 'uuid'
-import { CreateCarDTO } from './dto/create-car.dto'
+import { CreateCarDTO, UpdateCarDTO } from './dto'
 import { ICar } from './interfaces/cars.interface'
 
 
@@ -36,5 +36,9 @@ export class CarsService {
         const newCar: ICar = { id: uuid(), ...createCarDTO }
         this._cars.push( newCar )
         return newCar
+    }
+
+    public update ( id: string, updateCarDTO: UpdateCarDTO ) {
+        return
     }
 }

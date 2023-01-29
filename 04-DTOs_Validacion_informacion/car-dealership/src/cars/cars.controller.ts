@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common'
 import { CarsService } from './cars.service'
-import { CreateCarDTO } from './dto/create-car.dto'
+import { CreateCarDTO, UpdateCarDTO } from './dto'
 
 
 @Controller( 'cars' )
@@ -36,11 +36,11 @@ export class CarsController {
     }
 
     @Patch( ':id' )
-    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() body: any ) {
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() updateCartDTO: UpdateCarDTO ) {
         return {
             ok: true,
             method: 'PATCH',
-            id: uuid, body
+            id: uuid, body: updateCartDTO
         }
     }
 
