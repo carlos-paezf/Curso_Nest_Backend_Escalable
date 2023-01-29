@@ -216,3 +216,53 @@ export class CarsController {
 ```
 
 Si tenemos más controladores tenemos una noticia genial, podemos mover el pipe de validación a nivel de aplicación.
+
+## Pipes Globales - A nivel de aplicación
+
+Vamos a remover la línea de uso de pipes que se encuentra a nivel de controlador, y ahora vamos al archivo `main.ts` y aplicar la siguiente configuración a nivel global:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe() )
+    ...
+}
+```
+
+Cuando enviamos una petición que no contiene las propiedades que pedimos, tendremos el siguiente error, o si enviamos el tipo de dato equivocado:
+
+```json
+{
+    "statusCode": 400,
+    "message": [
+        "brand must be a string",
+        "model must be a string"
+    ],
+    "error": "Bad Request"
+}
+```
+
+El inconveniente que tenemos ahora, es que nos pueden enviar información de más en nuestra petición, lo cual podría llegar a generar inconvenientes al momento de hacer la petición en la base de datos. Al momento de declarar el uso del pipe a nivel global nos brinda una solución, y es hacer uso de la propiedad `whitelist`, con la cual solo va enviar como data los elementos que están definidos en nuestro DTO:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe( {
+        whitelist: true
+    } ) )
+    ...
+}
+```
+
+Si queremos ser más estrictos, e indicarle al cliente cuales datos no debe enviar, usamos la propiedad `forbidNonWhitelisted`:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe( {
+        whitelist: true,
+        forbidNonWhitelisted: true
+    } ) )
+    ...
+}
+```

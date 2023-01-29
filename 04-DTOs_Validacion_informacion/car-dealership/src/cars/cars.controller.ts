@@ -1,10 +1,9 @@
-import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post, UsePipes, ValidationPipe } from '@nestjs/common'
+import { Body, Controller, Delete, Get, NotFoundException, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common'
 import { CarsService } from './cars.service'
 import { CreateCarDTO } from './dto/create-car.dto'
 
 
 @Controller( 'cars' )
-@UsePipes( ValidationPipe )
 export class CarsController {
 
     constructor ( private readonly _carsService: CarsService ) { }
