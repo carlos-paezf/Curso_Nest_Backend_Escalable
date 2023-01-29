@@ -266,3 +266,38 @@ async function bootstrap () {
     ...
 }
 ```
+
+## Crear el nuevo carro
+
+Vamos a crear un nuevo método dentro del servicio `CarService` con la intención de crear un nuevo carro:
+
+```ts
+export class CarsService {
+    ...
+    public create ( createCarDTO: CreateCarDTO ) {
+        const newCar: ICar = { ...createCarDTO, id: uuid() }
+        this._cars.push( newCar )
+        return newCar
+    }
+}
+```
+
+Ahora lo llamamos dentro del controlador:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Post()
+    createCar ( @Body() createCarDTO: CreateCarDTO ) {
+        const data = this._carsService.create( createCarDTO )
+        return {
+            ok: true, method: 'POST',
+            data
+        }
+    }
+    ...
+}
+```
+
+Con lo anterior logramos crear un nuevo elemento dentro del arreglo con la data que se envió mediante el body, pero con un id de tipo UUID que se define al momento de enviar la nueva información al arreglo general.

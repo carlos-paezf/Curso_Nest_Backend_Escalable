@@ -28,10 +28,10 @@ export class CarsController {
 
     @Post()
     createCar ( @Body() createCarDTO: CreateCarDTO ) {
+        const data = this._carsService.create( createCarDTO )
         return {
-            ok: true,
-            method: 'POST',
-            data: createCarDTO
+            ok: true, method: 'POST',
+            data
         }
     }
 
