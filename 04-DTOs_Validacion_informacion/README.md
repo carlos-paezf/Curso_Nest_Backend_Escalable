@@ -141,3 +141,78 @@ export class CarsController {
 ```
 
 Es importante aclarar que aún no hemos aplicado validaciones, solo creamos la clase base o guía.
+
+## ValidationPipe - Class Validator y Transformer
+
+Cada petición que se realiza al backend, debe tener una estructura e información valida. Tenemos un pipe llamado `ValidationPipe`, el cual trabaja de la mano de los paquetes de Class Validator y Class Transformer. Hay 4 lugares en donde podemos aplicar pipes: A nivel global de la aplicación, a nivel global del controlador, dentro de un método del controlador, o dentro de los decoradores de los parámetros de los métodos.
+
+El primer caso en el que vamos a usar el `ValidationPipe` será en el método para la creación de un carro. Pero, primero vamos a instalar los 2 paquetes que mencionamos anteriormente:
+
+```txt
+$: pnpm i class-validator class-transformer
+```
+
+Luego dentro del controlador llamamos lo siguiente:
+
+```ts
+import { ..., UsePipes, ValidationPipe } from '@nestjs/common'
+...
+
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Post()
+    @UsePipes( ValidationPipe )
+    createCar ( @Body() createCarDTO: CreateCarDTO ) { ... }
+    ...
+}
+```
+
+Luego, dentro de clase DTO asignamos las validaciones que queremos:
+
+```ts
+import { IsString } from "class-validator"
+
+export class CreateCarDTO {
+    @IsString()
+    readonly brand!: string
+
+    @IsString()
+    readonly model!: string
+}
+```
+
+Como queremos validar la información que también se envía mediante el método de actualización, podríamos replicar la forma anterior:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Post()
+    @UsePipes( ValidationPipe )
+    createCar ( @Body() createCarDTO: CreateCarDTO ) { ... }
+
+    @Patch( ':id' )
+    @UsePipes( ValidationPipe )
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() body: any ) { ... }
+    ...
+}
+```
+
+Aunque parece una solución simple, tenemos uno más simple y que cumple con el principio DRY (Don't Repeat Yourself), y es declarando el uso del pipe de validación a nivel del controlador:
+
+```ts
+@Controller( 'cars' )
+@UsePipes( ValidationPipe )
+export class CarsController {
+    ...
+    @Post()
+    createCar ( @Body() createCarDTO: CreateCarDTO ) { ... }
+
+    @Patch( ':id' )
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() body: any ) { ... }
+    ...
+}
+```
+
+Si tenemos más controladores tenemos una noticia genial, podemos mover el pipe de validación a nivel de aplicación.
