@@ -415,3 +415,87 @@ export class CarsService {
     }
 }
 ```
+
+## Borrar un carro
+
+Por últimos vamos a crear el último endpoint, la eliminación de un vehículo. Lo primero es definir el servicio:
+
+```ts
+import { ..., NotFoundException } from '@nestjs/common'
+...
+
+@Injectable()
+export class CarsService {
+    ...
+    public delete ( id: string ) {
+        const car = this.findOneById( id )
+        if ( !car || !Object.keys( car ).length )
+            throw new NotFoundException( `Car with id ${ id } not found` )
+
+        this._cars = this._cars.filter( car => car.id !== id )
+
+        return
+    }
+}
+```
+
+Y dentro del controlador solo llamamos el servicio:
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    @Delete( ':id' )
+    deleteCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string ) {
+        this._carsService.delete( uuid )
+
+        return {
+            ok: true,
+            method: 'DELETE',
+            id: uuid
+        }
+    }
+}
+```
+
+Ahora bien, tenemos que refactorizar el código para aplicar el servicio DRY, puesto que la validación sobre el resultado del método de encontrar por id está siendo aplicada en dos lugares diferentes, y lo podemos centralizar en el método del servicio `findOneById` y limpiamos el código duplicado en los otros lugares:
+
+```ts
+@Injectable()
+export class CarsService {
+    ...
+    public findOneById ( id: string ) {
+        const car = { ...this._cars.find( car => car.id === id ) }
+        if ( !car || !Object.keys( car ).length )
+            throw new NotFoundException( `Car with id ${ id } not found` )
+        return car
+    }
+    ...
+    public delete ( id: string ) {
+        const car = this.findOneById( id )
+        
+        this._cars = this._cars.filter( car => car.id !== id )
+
+        return
+    }
+}
+```
+
+```ts
+@Controller( 'cars' )
+export class CarsController {
+    ...
+    Patch( ':id' )
+    updateCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string, @Body() updateCarDTO: UpdateCarDTO ) {
+        const data = this._carsService.update( uuid, updateCarDTO )
+        return {
+            ok: true,
+            method: 'PATCH',
+            data
+        }
+    }
+    ...
+}
+```
+
+Con lo anterior logramos tener una afectación en los métodos de obtener por id, actualizar y eliminar, tanto en controlador como en servicios.

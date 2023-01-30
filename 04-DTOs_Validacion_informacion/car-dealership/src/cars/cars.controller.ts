@@ -17,9 +17,6 @@ export class CarsController {
     getCarById ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string ) {
         const data = this._carsService.findOneById( uuid )
 
-        if ( !data || !Object.keys( data ).length )
-            throw new NotFoundException( `Car with id ${ uuid } not found` )
-
         return {
             id: uuid,
             data
@@ -47,6 +44,8 @@ export class CarsController {
 
     @Delete( ':id' )
     deleteCar ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) uuid: string ) {
+        this._carsService.delete( uuid )
+
         return {
             ok: true,
             method: 'DELETE',
