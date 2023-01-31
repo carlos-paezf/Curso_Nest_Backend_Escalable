@@ -45,3 +45,17 @@ CREATE src/brands/dto/update-brand.dto.ts (173 bytes)
 CREATE src/brands/entities/brand.entity.ts (22 bytes)
 UPDATE src/app.module.ts (297 bytes)
 ```
+
+## Crear CRUD completo de Brands
+
+Vamos a crear el CRUD completo para el módulo de Brands. Lo primero es definir la entidad:
+
+```ts
+export class Brand {
+    id: string
+    name: string
+
+    createdAt: number
+    updatedAt?: number
+}
+```
