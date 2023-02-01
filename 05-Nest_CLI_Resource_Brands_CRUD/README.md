@@ -215,3 +215,52 @@ export class BrandsController {
 ```
 
 Y así de fácil construimos un CRUD básico mediante los resource de Nest.
+
+## Crear servicio SEED para cargar datos
+
+Vamos a generar un SEED o semilla con el fin de tener datos pre-cargados que se puedan usar para probar y recuperar la aplicación en caso de que ejecute algún comando destructivo. El seed solo se puede ejecutar en entorno de desarrollo.
+
+Lo primero será generar un resource para el SEED:
+
+```txt
+$: nest g res seed --no-spec
+? What transport layer do you use? REST API
+? Would you like to generate CRUD entry points? Yes
+CREATE src/seed/seed.controller.ts (883 bytes)
+CREATE src/seed/seed.module.ts (240 bytes)
+CREATE src/seed/seed.service.ts (607 bytes)
+CREATE src/seed/dto/create-seed.dto.ts (30 bytes)
+CREATE src/seed/dto/update-seed.dto.ts (169 bytes)
+CREATE src/seed/entities/seed.entity.ts (21 bytes)
+UPDATE src/app.module.ts (358 bytes)
+```
+
+Para este nuevo módulo vamos a eliminar algunos archivos que no necesitamos, como lo son los DTOs y el entity, dentro del método del controlado solo creamos un método get:
+
+```ts
+import { Controller, Get } from '@nestjs/common'
+import { SeedService } from './seed.service'
+
+@Controller( 'seed' )
+export class SeedController {
+    constructor ( private readonly seedService: SeedService ) { }
+
+    @Get()
+    runSeed () {
+        return this.seedService.populateDB()
+    }
+}
+```
+
+Y ahora definimos el método del servicio, pero aún no vamos definir sus acciones, lo haremos en las siguientes lecciones:
+
+```ts
+import { Injectable } from '@nestjs/common'
+
+@Injectable()
+export class SeedService {
+    populateDB () {
+        return 'SEED Execute'
+    }
+}
+```
