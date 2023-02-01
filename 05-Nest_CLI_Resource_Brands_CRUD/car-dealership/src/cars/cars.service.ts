@@ -6,23 +6,7 @@ import { ICar } from './interfaces/cars.interface'
 
 @Injectable()
 export class CarsService {
-    private _cars: ICar[] = [
-        {
-            id: uuid(),
-            brand: 'Toyota',
-            model: 'Corolla'
-        },
-        {
-            id: uuid(),
-            brand: 'Honda',
-            model: 'Civic'
-        },
-        {
-            id: uuid(),
-            brand: 'Jeep',
-            model: 'Cherokee'
-        }
-    ]
+    private _cars: ICar[] = []
 
     public findAll () {
         return [ ...this._cars ]
@@ -61,5 +45,9 @@ export class CarsService {
     public delete ( id: string ) {
         this.findOneById( id )
         this._cars = this._cars.filter( car => car.id !== id )
+    }
+
+    public fillCarsWithSeedData ( cars: ICar[] ) {
+        this._cars = cars
     }
 }

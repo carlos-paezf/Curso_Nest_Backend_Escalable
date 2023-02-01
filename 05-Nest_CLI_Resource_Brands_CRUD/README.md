@@ -264,3 +264,92 @@ export class SeedService {
     }
 }
 ```
+
+## Preparar servicios para insertar SEED
+
+Vamos a crear un archivo llamado `seed/data/cars.seed.ts`, en el cual tendremos la data que tendremos como prueba (esta puede ser estática, o se puede obtener mediante un método con data aleatoria):
+
+```ts
+import { ICar } from "src/cars/interfaces/cars.interface"
+import { v4 as uuid } from 'uuid'
+
+
+export const CARS_SEED: ICar[] = [
+    {
+        id: uuid(),
+        brand: 'Toyota',
+        model: "Corolla"
+    },
+    {
+        id: uuid(),
+        brand: 'Honda',
+        model: "Civic"
+    },
+    {
+        id: uuid(),
+        brand: 'Jeep',
+        model: "Cherokee"
+    },
+]
+```
+
+Hacemos lo mismo para las marcas en el archivo `seed/data/brands.seed.ts`:
+
+```ts
+import { Brand } from "src/brands/entities/brand.entity"
+import { v4 as uuid } from 'uuid'
+
+export const BRANDS_SEED: Brand[] = [
+    {
+        id: uuid(),
+        name: 'Volvo',
+        createdAt: new Date().getTime()
+    },
+    {
+        id: uuid(),
+        name: 'Toyota',
+        createdAt: new Date().getTime()
+    },
+    {
+        id: uuid(),
+        name: 'Honda',
+        createdAt: new Date().getTime()
+    },
+    {
+        id: uuid(),
+        name: 'Jeep',
+        createdAt: new Date().getTime()
+    },
+    {
+        id: uuid(),
+        name: 'Tesla',
+        createdAt: new Date().getTime()
+    }
+]
+```
+
+Ahora, esta data debe ser cargada en los diferentes módulos (acción que no es necesaria al momento de crear la base de datos), por lo que primero vamos a crear un método dentro del servicio de carros para llenar nuestra lista vacía:
+
+```ts
+@Injectable()
+export class CarsService {
+    private _cars: ICar[] = []
+    ...
+    public fillCarsWithSeedData ( cars: ICar[] ) {
+        this._cars = cars
+    }
+}
+```
+
+De nuevo, hacemos lo mismo dentro de las marcas:
+
+```ts
+@Injectable()
+export class BrandsService {
+    private _brands: Brand[] = []
+    ...
+    public fillBrandsWithSeedData ( brands: Brand[] ) {
+        this._brands = brands
+    }
+}
+```
