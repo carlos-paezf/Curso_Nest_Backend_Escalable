@@ -375,3 +375,46 @@ export class PokemonController {
     ...
 }
 ```
+
+## FindOneBy - Buscar por name, MongoId y number
+
+Vamos a crear un método dentro del servicio, que nos permita la búsqueda de un pokemon por su id, nombre o número asignado. Pero antes, haremos un cambio semántico en el parámetro del endpoint, ya que no queremos son un id, más bien queremos un termino de búsqueda que sea de tipo string:
+
+```ts
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Get( ':term' )
+    findOne ( @Param( 'term' ) term: string ) {
+        return this.pokemonService.findOne( term )
+    }
+    ...
+}
+```
+
+Dentro del método del servicio vamos a validar que si al momento de convertir en número es un número valido y no es un NaN, entonces busque mediante por la propiedad de `number`, si no es un número pero si es un identificador de mongo valido entonces hace la búsqueda por `_id`, si a este momento no ha encontrado ningún elemento, entonces busque por `name`. Finalmente, si no encuentra por ninguna de las propiedades, entonces regresa un 404:
+
+```ts
+import { isValidObjectId, ... } from 'mongoose'
+...
+
+@Injectable()
+export class PokemonService {
+    ...
+    async findOne ( term: string ) {
+        let pokemon: Pokemon
+        if ( !isNaN( Number( term ) ) )
+            pokemon = await this._pokemonModel.findOne( { number: term } )
+
+        if ( !pokemon && isValidObjectId( term ) )
+            pokemon = await this._pokemonModel.findById( term )
+
+        if ( !pokemon )
+            pokemon = await this._pokemonModel.findOne( { name: term.toLowerCase().trim() } )
+
+        if ( !pokemon ) throw new NotFoundException( `Pokemon with id, name or number "${ term }" not found` )
+        return pokemon
+    }
+    ...
+}
+```

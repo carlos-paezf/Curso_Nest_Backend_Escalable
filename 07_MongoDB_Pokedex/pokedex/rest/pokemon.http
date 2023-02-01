@@ -6,6 +6,18 @@ POST http://localhost:3000/api/pokemon
 Content-Type: application/json
 
 {
-    "name": "Charmander",
-    "number": 4
+    "name": "Bulbasaur",
+    "number": 1
 }
+
+################################################################
+
+GET http://localhost:3000/api/pokemon/4
+
+################################################################
+
+GET http://localhost:3000/api/pokemon/63dab2df106b7e1f132cc658
+
+################################################################
+
+GET http://localhost:3000/api/pokemon/charmander
