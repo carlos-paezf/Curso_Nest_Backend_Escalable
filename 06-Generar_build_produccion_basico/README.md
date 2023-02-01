@@ -6,7 +6,7 @@ Esta sección es muy corta, pero muy importante. Seguimos usando el mismo proyec
 $: pnpm  build
 ```
 
-Y para ejecutar la aplicación modo producción, usamos el siguiente comando:
+La instrucción anterior genera únicamente la carpeta `dist`. Y para ejecutar la aplicación modo producción, usamos el siguiente comando:
 
 ```txt
 $: pnpm start:prod
