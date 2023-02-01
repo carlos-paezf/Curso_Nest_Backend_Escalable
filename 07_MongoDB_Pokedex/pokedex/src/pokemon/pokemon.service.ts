@@ -56,8 +56,10 @@ export class PokemonService {
     }
 
     async remove ( id: string ) {
-        const result = await this._pokemonModel.findByIdAndDelete( id )
-        await result
+        const { deletedCount } = await this._pokemonModel.deleteOne( { _id: id } )
+        if ( deletedCount === 0 )
+            throw new NotFoundException( `Pokemon with id ${ id } not found` )
+        return
     }
 
     private _handleExceptions ( error: any ) {

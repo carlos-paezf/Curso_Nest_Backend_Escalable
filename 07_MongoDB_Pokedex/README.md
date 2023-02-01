@@ -636,3 +636,23 @@ export class PokemonService {
 ```
 
 El único inconveniente de este nuevo método consiste en que si enviamos un id valido pero no existente, nuestra aplicación aún así responde con un status 200.
+
+## Validar y eliminar en una sola consulta
+
+Vamos a evitar los falsos positivos al momento de la eliminación usando el método `deleteOne` y analizando una de sus propiedades retornadas:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async remove ( id: string ) {
+        const { deletedCount } = await this._pokemonModel.deleteOne( { _id: id } )
+        if ( deletedCount === 0 )
+            throw new NotFoundException( `Pokemon with id ${ id } not found` )
+        return
+    }
+    ...
+}
+```
+
+Si no hay cambios aplicados sobre la base de datos, significa que no encontró el id y por lo tanto eliminamos un código 404, en caso contrario retornamos un status 200.
