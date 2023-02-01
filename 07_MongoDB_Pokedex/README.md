@@ -278,3 +278,36 @@ export class CreatePokemonDto {
     number!: number
 }
 ```
+
+## Crear pokemon en base de datos
+
+Vamos a insertar los documentos en la base de datos. Para ello haremos la inyección de un modelo genérico de mongoose apuntando a nuestra entidad, dentro del servicio de pokemon:
+
+```ts
+import { InjectModel } from '@nestjs/mongoose'
+import { Model } from 'mongoose'
+import { Pokemon } from './entities/pokemon.entity'
+...
+
+@Injectable()
+export class PokemonService {
+    constructor ( @InjectModel( Pokemon.name ) private readonly _pokemonModel: Model<Pokemon> ) { }
+    ...
+}
+```
+
+Lo siguiente es usar la inyección para el registro del nuevo documento, teniendo en cuenta que es un proceso asíncrono:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async create ( createPokemonDto: CreatePokemonDto ) {
+        createPokemonDto.name = createPokemonDto.name.toLowerCase()
+        const pokemon = await this._pokemonModel.create( createPokemonDto )
+        return pokemon
+    }
+}
+```
+
+Cuando grabamos el registro, podemos observar en TablePlus que ya ha sido almacenado correctamente. Pero, si intentamos guardar otro elemento con el valor de alguna de las propiedades repetidas, obtenemos un Internal Server Error por llaves duplicadas. En teoría, el error aparece como culpa del desarrollador y no por la acción del cliente, lo cual puede generar confusión de ambas partes.
