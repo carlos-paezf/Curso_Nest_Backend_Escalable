@@ -353,3 +353,61 @@ export class BrandsService {
     }
 }
 ```
+
+## Inyectar servicios en otros servicios
+
+Para inyectar un servicio dentro de otro, debemos tener en cuenta si se encuentran dentro del mismo módulo o en diferentes. En este caso, tanto el servicio de carros como de marcas se encuentran en módulos diferentes al Seed. Para solventar esto, debemos exportar los servicios de los módulos de la siguiente manera en el decorador `@Module`:
+
+```ts
+@Module( {
+    ...,
+    exports: [ CarsService ]
+} )
+export class CarsModule { }
+```
+
+```ts
+@Module( {
+    ...,
+    exports: [ BrandsService ]
+} )
+export class BrandsModule { }
+```
+
+Y ahora, dentro del decorador `@Module` del seed debemos hacer la importación de los módulos de carros y marcas de la siguiente manera:
+
+```ts
+import { CarsModule } from '../cars/cars.module'
+import { BrandsModule } from '../brands/brands.module'
+...
+
+@Module( {
+    ...,
+    imports: [ CarsModule, BrandsModule ]
+} )
+export class SeedModule { }
+```
+
+Con esto, logramos que se pueda inyectar dependencias entre servicios de diferentes módulos, ejemplo:
+
+```ts
+import { CarsService } from 'src/cars/cars.service'
+import { BrandsService } from '../brands/brands.service'
+...
+
+@Injectable()
+export class SeedService {
+    constructor (
+        private readonly _carsService: CarsService,
+        private readonly _brandsService: BrandsService
+    ) { }
+
+    populateDB () {
+        this._carsService.fillCarsWithSeedData( CARS_SEED )
+        this._brandsService.fillBrandsWithSeedData( BRANDS_SEED )
+        return 'SEED executed'
+    }
+}
+```
+
+Hemos conseguido que al hacer una petición GET a `http://localhost:3000/seed` tengamos la data pre-cargada en ambos módulos.
