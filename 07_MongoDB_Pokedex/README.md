@@ -237,3 +237,44 @@ export class PokemonModule { }
 ```
 
 Luego, cuando levantamos el proyecto, podemos revisar en TablePlus que la colección `pokemons` se ha creado correctamente.
+
+## POST - Recibir y validar la data
+
+Vamos a establecer las validaciones para la recepción de la data dentro de `CreatePokemonDTO`, pero primero necesitamos instalar las librerías para apoyarnos en los decoradores de validación:
+
+```txt
+$: pnpm i class-validator class-transformer
+```
+
+Luego usamos el pipe de validación a nivel global de la aplicación en `main.ts`
+
+```ts
+import { ValidationPipe } from '@nestjs/common'
+...
+
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe( {
+        whitelist: true,
+        forbidNonWhitelisted: true
+    } ) )
+    ...
+}
+```
+
+Ahora si modificamos el DTO de creación:
+
+```ts
+import { IsInt, IsPositive, IsString, Min, MinLength } from "class-validator"
+
+export class CreatePokemonDto {
+    @IsString()
+    @MinLength( 1 )
+    name!: string
+
+    @IsInt()
+    @IsPositive()
+    @Min( 1 )
+    number!: number
+}
+```

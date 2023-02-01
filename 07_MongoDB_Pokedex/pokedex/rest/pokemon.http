@@ -1,0 +1,11 @@
+GET http://localhost:3000/api/pokemon
+
+################################################################
+
+POST http://localhost:3000/api/pokemon
+Content-Type: application/json
+
+{
+    "name": "Charmander",
+    "number": 4
+}
