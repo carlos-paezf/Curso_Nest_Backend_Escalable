@@ -96,3 +96,23 @@ export class AppModule { }
 ```
 
 Con ello, al momento de ir al endpoint `http://localhost:3000` tendremos una página web personalizada como contenido estático.
+
+## Global Prefix
+
+Vamos a generar un resource para pokemon con el siguiente comando:
+
+```txt
+$: nest g res pokemon --no-spec
+```
+
+Un prefijo global es un segmento del endpoint que se comparte a través de todos los demás. En muchas apis podemos observar prefijos globales como `https://<url>/api/v1/<segmento de consulta>`, vamos a aplicar algo similar en nuestro backend con la siguiente configuración: Dentro del archivo `main.ts` aplicamos una configuración a nivel global:
+
+```ts
+async function bootstrap () {
+    ...
+    app.setGlobalPrefix( 'api' )
+    ...
+}
+```
+
+Con esto tendremos un endpoint como el siguiente `http://localhost:3000/api/pokemon/:id`.
