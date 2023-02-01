@@ -6,8 +6,8 @@ POST http://localhost:3000/api/pokemon
 Content-Type: application/json
 
 {
-    "name": "Bulbasaur",
-    "number": 1
+    "name": "Charmander",
+    "number": 4
 }
 
 ################################################################
@@ -31,3 +31,7 @@ Content-Type: application/json
     "name": "Bulbasaur actualizado",
     "number": 1
 }
+
+################################################################
+
+DELETE http://localhost:3000/api/pokemon/63dab2df106b7e1f132cc658

@@ -533,3 +533,21 @@ export class PokemonService {
     }
 }
 ```
+
+## Eliminar un Pokemon
+
+Vamos a eliminar un pokemon con el siguiente servicio:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async remove ( id: string ) {
+        const pokemon = await this.findOne( id )
+        await pokemon.deleteOne()
+    }
+    ...
+}
+```
+
+El problema en estos momentos, es que podemos usar el name, number o id para ejecutar la eliminación, en la siguiente lección vamos a crear un Pipe personalizado con nos ayude con la validación de que el parámetro de búsqueda tenga que ser si o si un id de mongo.
