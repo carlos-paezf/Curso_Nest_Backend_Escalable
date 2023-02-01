@@ -160,3 +160,29 @@ Mediante TablePlus podemos conectarnos a la base de datos y probar que si está 
 ```txt
 $: docker logs <id del contenedor>
 ```
+
+## Conectar Nest con Mongo
+
+Vamos a usar un adaptador de `mongoose` creado por los desarrolladores de Nest con el fin de mantener nuestra aplicación más segura contra fallas del lado de la base de datos. Para la instalación usamos el siguiente comando:
+
+```txt
+$: pnpm install @nestjs/mongoose mongoose
+```
+
+Ahora dentro de `app.module.ts` creamos la referencia a nuestra base de datos:
+
+```ts
+import { MongooseModule } from '@nestjs/mongoose'
+...
+
+@Module( {
+    imports: [
+        ...,
+        MongooseModule.forRoot( 'mongodb://localhost:27017/nest-pokemon' ),
+        ...
+    ]
+} )
+export class AppModule { }
+```
+
+Si no contamos con la base de datos, entonces tendremos un error en los logs del proyecto al momento de levantarlo, y no avanzará hasta que no reconozca la base de datos.
