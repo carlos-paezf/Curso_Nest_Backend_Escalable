@@ -418,3 +418,118 @@ export class PokemonService {
     ...
 }
 ```
+
+## Actualizar Pokemon en base de datos
+
+Vamos a actualizar un documento con la misma estrategia de la lección anterior, es decir, usando el name, number o id. En el controlador volvemos a aplicar el cambio del parámetro:
+
+```ts
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Patch( ':term' )
+    update ( @Param( 'term' ) term: string, @Body() updatePokemonDto: UpdatePokemonDto ) {
+        return this.pokemonService.update( term, updatePokemonDto )
+    }
+    ...
+}
+```
+
+En el servicio usamos el método de la lección anterior para buscar el documento a actualizar, si la información que está enviando desde el endpoint tiene la propiedad del nombre, la transformamos a minúscula, luego actualizamos el documento y retornamos la información:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async update ( term: string, updatePokemonDto: UpdatePokemonDto ) {
+        const pokemon = await this.findOne( term )
+
+        if ( updatePokemonDto.name )
+            updatePokemonDto.name = updatePokemonDto.name.toLowerCase()
+
+        await pokemon.updateOne( updatePokemonDto, { new: true } )
+
+        return pokemon
+    }
+    ...
+}
+```
+
+Aquí hay un pequeño error, el registro se actualiza en base de datos, pero en la respuesta al endpoint se está retornando la información anterior. Para solucionar esto, retornamos un nuevo objeto con las propiedades dispersas del pokemon, sobreescribiendolas con la información enviada para actualizar:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async update ( term: string, updatePokemonDto: UpdatePokemonDto ) {
+        const pokemon = await this.findOne( term )
+
+        if ( updatePokemonDto.name )
+            updatePokemonDto.name = updatePokemonDto.name.toLowerCase()
+
+        await pokemon.updateOne( updatePokemonDto, { new: true } )
+
+        return { ...pokemon.toJSON(), ...updatePokemonDto }
+    }
+    ...
+}
+```
+
+Es importante reconocer que tenemos valores únicos y por lo tanto no podemos repetirlos ni en la creación, ni en la actualización, y para controlar esto usamos un `try...catch` para evaluar el error y retornar un código personalizado y no un status 500:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    async update ( term: string, updatePokemonDto: UpdatePokemonDto ) {
+        const pokemon = await this.findOne( term )
+
+        if ( updatePokemonDto.name )
+            updatePokemonDto.name = updatePokemonDto.name.toLowerCase()
+
+        try {
+            await pokemon.updateOne( updatePokemonDto, { new: true } )
+
+            return { ...pokemon.toJSON(), ...updatePokemonDto }
+        } catch ( error ) {
+            if ( error.code === 11000 )
+                throw new BadRequestException( `Pokemon exists in DB ${ JSON.stringify( error.keyValue ) }` )
+
+            console.log( error )
+            throw new InternalServerErrorException( `Can't create Pokemon - Check server logs` )
+        }
+    }
+    ...
+}
+```
+
+Como estamos viendo, estamos infligiendo el principio DRY, por lo que vamos a crear un método que se encargue de manejar los errores de las excepciones no controladas:
+
+```ts
+@Injectable()
+export class PokemonService {
+    constructor ( @InjectModel( Pokemon.name ) private readonly _pokemonModel: Model<Pokemon> ) { }
+
+    async create ( createPokemonDto: CreatePokemonDto ) {
+        ...
+        try { ... } catch ( error ) {
+            this._handleExceptions( error )
+        }
+    }
+
+    async update ( term: string, updatePokemonDto: UpdatePokemonDto ) {
+        ...
+        try { ... } catch ( error ) {
+            this._handleExceptions( error )
+        }
+    }
+    
+    private _handleExceptions ( error: any ) {
+        if ( error.code === 11000 )
+            throw new BadRequestException( `Pokemon exists in DB ${ JSON.stringify( error.keyValue ) }` )
+
+        console.log( error )
+        throw new InternalServerErrorException( `Can't create Pokemon - Check server logs` )
+    }
+}
+```

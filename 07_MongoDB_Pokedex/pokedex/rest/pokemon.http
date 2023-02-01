@@ -21,3 +21,13 @@ GET http://localhost:3000/api/pokemon/63dab2df106b7e1f132cc658
 ################################################################
 
 GET http://localhost:3000/api/pokemon/charmander
+
+################################################################
+
+PATCH http://localhost:3000/api/pokemon/1
+Content-Type: application/json
+
+{
+    "name": "Bulbasaur actualizado",
+    "number": 1
+}
