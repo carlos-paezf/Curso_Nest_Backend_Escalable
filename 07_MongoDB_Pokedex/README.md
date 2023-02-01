@@ -311,3 +311,67 @@ export class PokemonService {
 ```
 
 Cuando grabamos el registro, podemos observar en TablePlus que ya ha sido almacenado correctamente. Pero, si intentamos guardar otro elemento con el valor de alguna de las propiedades repetidas, obtenemos un Internal Server Error por llaves duplicadas. En teoría, el error aparece como culpa del desarrollador y no por la acción del cliente, lo cual puede generar confusión de ambas partes.
+
+## Responder un error especifico
+
+Siempre es recomendable no hacer muchas peticiones a la base de datos, por lo tanto aprovechamos los mensajes de error que obtenemos al hacer una mala operación, para retornar una respuesta controlada, y esto es justo lo que vamos a hacer en caso de que se quiera crear un registro duplicado:
+
+```ts
+import { ..., BadRequestException, InternalServerErrorException } from '@nestjs/common'
+...
+
+@Injectable()
+export class PokemonService {
+    ...
+    async create ( createPokemonDto: CreatePokemonDto ) {
+        createPokemonDto.name = createPokemonDto.name.toLowerCase()
+        try {
+            const pokemon = await this._pokemonModel.create( createPokemonDto )
+            return pokemon
+        } catch ( error ) {
+            if ( error.code === 11000 )
+                throw new BadRequestException( `Pokemon exists in DB ${ JSON.stringify( error.keyValue ) }` )
+
+            console.log( error )
+            throw new InternalServerErrorException( `Can't create Pokemon - Check server logs` )
+        }
+    }
+    ...
+}
+```
+
+Actualmente, cada que creamos un registro obtenemos un código de respuesta `201 - Created`, pero si queremos que se responda con otro código de estatus, debemos hacer la siguiente configuración en el controlador:
+
+```ts
+import { ..., HttpCode } from '@nestjs/common'
+...
+
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Post()
+    @HttpCode( 200 )
+    create ( @Body() createPokemonDto: CreatePokemonDto ) {
+        return this.pokemonService.create( createPokemonDto )
+    }
+    ...
+}
+```
+
+Y si no queremos equivocarnos, podemos usar un enum que nos ofrece el propio Nest con los códigos de error:
+
+```ts
+import { ..., HttpCode, HttpStatus } from '@nestjs/common'
+...
+
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Post()
+    @HttpCode( HttpStatus.OK )
+    create ( @Body() createPokemonDto: CreatePokemonDto ) {
+        return this.pokemonService.create( createPokemonDto )
+    }
+    ...
+}
+```
