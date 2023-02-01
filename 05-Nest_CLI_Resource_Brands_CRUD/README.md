@@ -59,3 +59,159 @@ export class Brand {
     updatedAt?: number
 }
 ```
+
+Una entidad es una clase que nos permite definir una gran variedad de validaciones para las propiedades que le establezcan para el objeto. Más adelante vamos a observar como nos ayuda en la creación de tablas o documentos en bases de datos.
+
+Pasamos al servicio de los brands para crear un arreglo con la data que vamos a manejar inicialmente:
+
+```ts
+import { v4 as uuid } from 'uuid'
+import { Brand } from './entities/brand.entity'
+...
+
+@Injectable()
+export class BrandsService {
+    private _brands: Brand[] = [
+        {
+            id: uuid(),
+            name: "Toyota",
+            createdAt: new Date().getTime()
+        }
+    ]
+    ...
+}
+```
+
+Al momento de usar los recursos, Nest define los id de tipo número, pero nosotros lo necesitamos de tipo string, por lo que, en los métodos donde se hace uso del id, reemplazamos el tipo:
+
+```ts
+@Injectable()
+export class BrandsService {
+    ...
+    findOne ( id: string ) { ... }
+
+    update ( id: string, updateBrandDto: UpdateBrandDto ) { ... }
+
+    remove ( id: string ) { ... }
+}
+```
+
+También vamos a modificar el DTO de creación con las propiedades que esperamos y las validaciones esperadas:
+
+```ts
+import { IsString, MinLength } from "class-validator"
+
+export class CreateBrandDto {
+    @IsString()
+    @MinLength( 1 )
+    name: string
+}
+```
+
+Y algo muy similar con el DTO de la actualización, puesto que solo tenemos una propiedad que se debe enviar en el cuerpo de la petición:
+
+```ts
+import { IsString, MinLength } from "class-validator"
+
+export class UpdateBrandDto {
+    @IsString()
+    @MinLength( 1 )
+    name: string
+}
+
+```
+
+Con esas configuraciones iniciales pasamos a crear el cuerpo de los métodos en los servicios:
+
+```ts
+@Injectable()
+export class BrandsService {
+    private _brands: Brand[] = [
+        {
+            id: uuid(),
+            name: "Toyota",
+            createdAt: new Date().getTime()
+        }
+    ]
+
+    create ( createBrandDto: CreateBrandDto ) {
+        const { name } = createBrandDto
+
+        const brand: Brand = {
+            id: uuid(),
+            name: name.toLowerCase(),
+            createdAt: new Date().getTime()
+        }
+
+        this._brands.push( brand )
+
+        return brand
+    }
+
+    findAll () {
+        return this._brands
+    }
+
+    findOne ( id: string ) {
+        const brand = this._brands.find( brand => brand.id === id )
+        if ( !brand )
+            throw new NotFoundException( `Brand with id ${ id } not found` )
+        return brand
+    }
+
+    update ( id: string, updateBrandDto: UpdateBrandDto ) {
+        let brandDB = this.findOne( id )
+        this._brands = this._brands.map( brand => {
+            if ( brand.id === id ) {
+                brandDB.updatedAt = new Date().getTime()
+                brandDB = { ...brandDB, ...updateBrandDto }
+                return brandDB
+            }
+            return brand
+        } )
+    }
+
+    remove ( id: string ) {
+        this._brands = this._brands.filter( brand => brand.id !== id )
+    }
+}
+```
+
+Por último terminamos de construir las funciones en el controlador:
+
+```ts
+@Controller( 'brands' )
+export class BrandsController {
+    constructor ( private readonly brandsService: BrandsService ) { }
+
+    @Post()
+    create ( @Body() createBrandDto: CreateBrandDto ) {
+        return this.brandsService.create( createBrandDto )
+    }
+
+    @Get()
+    findAll () {
+        return this.brandsService.findAll()
+    }
+
+    @Get( ':id' )
+    findOne ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) id: string ) {
+        return this.brandsService.findOne( id )
+    }
+
+    @Patch( ':id' )
+    update (
+        @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) id: string,
+        @Body() updateBrandDto: UpdateBrandDto
+    ) {
+        return this.brandsService.update( id, updateBrandDto )
+    }
+
+    @Delete( ':id' )
+    remove ( @Param( 'id', new ParseUUIDPipe( { version: '4' } ) ) id: string ) {
+        return this.brandsService.remove( id )
+    }
+}
+```
+
+Y así de fácil construimos un CRUD básico mediante los resource de Nest.
