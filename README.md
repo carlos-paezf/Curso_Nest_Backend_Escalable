@@ -27,3 +27,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 04: DTOs y Validación de información](04-DTOs_Validacion_informacion/README.md)
 - [Sección 05: Nest CLI Resource - Brands CRUD](05-Nest_CLI_Resource_Brands_CRUD/README.md)
 - [Sección 06: Generar build de producción básico](06-Generar_build_produccion_basico/README.md)
+- [Sección 07: MongoDB Pokedex](07_MongoDB_Pokedex/README.md)
