@@ -236,4 +236,70 @@ export class SeedService {
 }
 ```
 
-En siguientes secciones veremos por qué es mejor la primera opción.
+En siguientes secciones veremos otra opción y cual podría ser mejor para la inserción de múltiples documentos.
+
+## Insertar múltiples registros simultáneamente
+
+En la lección anterior vimos dos opciones de como guardar los registros en el servicio del Seed. Tanto la primera como la segunda opción presentan el inconveniente de que es muy tardada la inserción de los datos dentro de la base de datos, puesto que se tiene que esperar que termine una inserción para pasar a la siguiente, entonces, si son múltiples registros el tiempo se incrementa por cada uno. Al momento de imprimir el tiempo de ejecución desde el controlador, con los dos métodos anteriores tenemos resultados en un rango de entre `40ms` a `55ms`.
+
+Vamos a intentar con otra solución, en la cual creamos un arreglo al cual le enviamos todas las promesas de inserción en la base de datos en cada recorrido del array, y luego ejecutamos todas las promesas mediante `Promises.all`. El tiempo de ejecución va de los `0.1ms` a los `3ms`:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    constructor (
+        @InjectModel( Pokemon.name ) private readonly _pokemonModel: Model<Pokemon>
+    ) { }
+
+    async populateDB () {
+        await this._pokemonModel.deleteMany( {} )
+
+        const { data: { results } } = await this._axios.get<IPokeResponse>( `https://pokeapi.co/api/v2/pokemon?limit=2000` )
+
+        const insertPromisesArray = []
+
+        results.forEach( async ( { name, url } ) => {
+            const segments = url.split( '/' )
+            const number: number = +segments.at( -2 )
+            insertPromisesArray.push(
+                this._pokemonModel.create( { name, number } )
+            )
+        } )
+
+        await Promise.all( insertPromisesArray )
+
+        return "Seed Executed"
+    }
+}
+```
+
+Con el anterior método usamos la inserción 1 a 1 de los registros, pero podemos usar la inserción múltiple que ya nos ofrece mongoose. El tiempo de ejecución está en un rango similar al anterior, pero el código es más limpio:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    constructor (
+        @InjectModel( Pokemon.name ) private readonly _pokemonModel: Model<Pokemon>
+    ) { }
+
+    async populateDB () {
+        await this._pokemonModel.deleteMany( {} )
+
+        const { data: { results } } = await this._axios.get<IPokeResponse>( `https://pokeapi.co/api/v2/pokemon?limit=2000` )
+
+        const pokemonToInsert: { name: string, number: number }[] = []
+
+        results.forEach( async ( { name, url } ) => {
+            const segments = url.split( '/' )
+            const number: number = +segments.at( -2 )
+            pokemonToInsert.push( { name, number } )
+        } )
+
+        await this._pokemonModel.insertMany( pokemonToInsert )
+
+        return "Seed Executed"
+    }
+}
+```
