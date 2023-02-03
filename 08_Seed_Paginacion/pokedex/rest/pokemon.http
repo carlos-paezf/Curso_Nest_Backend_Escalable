@@ -2,6 +2,10 @@ GET http://localhost:3000/api/pokemon
 
 ################################################################
 
+GET http://localhost:3000/api/pokemon?limit=100&offset=100
+
+################################################################
+
 POST http://localhost:3000/api/pokemon
 Content-Type: application/json
 

@@ -406,3 +406,60 @@ export class SeedService {
     }
 }
 ```
+
+## Paginación de Pokemons
+
+Vamos paginar el resultado del listado de pokemons, muy similar a como lo hace la API de Pokemon. Lo primero será ir al controlador del módulo de pokemon y dentro del método obtener los query params:
+
+```ts
+import { ..., Query } from '@nestjs/common'
+...
+
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Get()
+    findAll ( @Query() queryParam ) {
+        console.log( { queryParam } )
+        return this.pokemonService.findAll()
+    }
+    ...
+}
+```
+
+Para validar los queryParams vamos a usar un DTO que nos permita controlar los tipos de datos y propiedades que tratan de enviar en la consulta. Este DTO que vamos a crear es muy genérico y no solo se puede usar con los pokemons, sino que se puede usar en cualquier otra consulta de otro módulo, por lo tanto creamos el DTO dentro del módulo `common` llamando el archivo como `dto/pagination.dto.ts`:
+
+```ts
+import { IsOptional, IsPositive, Min } from "class-validator"
+
+export class PaginationDto {
+    @IsOptional()
+    @IsPositive()
+    @Min( 1 )
+    limit: number
+
+    @IsOptional()
+    @IsPositive()
+    offset: number
+}
+```
+
+Asignamos esta validación a los query params dentro del método del controlador:
+
+```ts
+import { PaginationDto } from 'src/common/dto/pagination.dto'
+...
+
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Get()
+    findAll ( @Query() queryParam: PaginationDto ) {
+        console.log( { queryParam } )
+        return this.pokemonService.findAll()
+    }
+    ...
+}
+```
+
+El problema actual es que los params están llegando como strings y por lo tanto no los reconoce al momento de hacer la validación numérica. La solución la veremos a continuación.
