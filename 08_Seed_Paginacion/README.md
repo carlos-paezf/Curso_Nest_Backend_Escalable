@@ -303,3 +303,106 @@ export class SeedService {
     }
 }
 ```
+
+## Crear un custom provider - opcional
+
+En estos momentos estamos usando Axios para ejecutar la petición de consulta a la API de Pokemon, pero, ¿que pasaría si queremos dejar de usar Axios y usar otro paquete? Actualmente el cambio no sería muy grandes, puesto que solo tenemos que cambiar 1 o 2 líneas, pero si tuviéramos más servicios como la misma estructura del seed, nos veríamos en el inconveniente de cambiar cada implementación en cada servicio.
+
+Para evitar esto, vamos a crear un provider con el fin de tener cambios más transparentes dentro del código. Estaremos aplicando el patrón Adapter y la sustitución de Liskov, similar a lo que vimos en [Sección 02 - Genéricos y sustitución de Liskov](../02-Introduccion_TypeScript/README.md#genéricos--sustitución-de-liskov).
+
+Dentro del módulo `common` vamos a crear un directorio llamado `adapters`, y una interface llamada `interfaces/http-adapter.interface.ts`. Dentro del último archivo exportamos la siguiente interface:
+
+```ts
+export interface IHttpAdapter {
+    get<T> ( url: string ): Promise<T>
+}
+```
+
+Los providers los podemos crear mediante el CLI, pero en esta ocasión vamos a crear el archivo de manera manual dentro de la carpeta que creamos anteriormente para los adaptadores. El nuevo archivo se llamará `adapters/axios.adapter.ts` y tendrá una clase que implementa de la interfaz anterior, con lo cual creamos el cuerpo del método get.
+
+```ts
+import axios, { AxiosInstance } from "axios"
+import { IHttpAdapter } from "../interfaces/http-adapter.interface"
+
+
+export class AxiosAdapter implements IHttpAdapter {
+    private _axios: AxiosInstance = axios
+
+    async get<T> ( url: string ): Promise<T> {
+        try {
+            const { data } = await this._axios.get<T>( url )
+            return data
+        } catch ( error ) {
+            throw new Error( 'This is an error - Ckeck logs' )
+        }
+    }
+}
+```
+
+Para poder usar nuestra clase como provider debemos usar el decorador `@Injectable()`:
+
+```ts
+import { Injectable } from "@nestjs/common"
+...
+
+@Injectable()
+export class AxiosAdapter implements IHttpAdapter { ... }
+```
+
+Los providers se encuentran a nivel de módulo, por lo que si queremos usarlo en otro módulo necesitamos primero definir la clase dentro de la sección `provider` del módulo al que pertenece:
+
+```ts
+import { Module } from '@nestjs/common'
+import { AxiosAdapter } from './adapters/axios.adapter'
+
+@Module( {
+    providers: [ AxiosAdapter ]
+} )
+export class CommonModule { }
+```
+
+Luego debemos exportarlo:
+
+```ts
+import { AxiosAdapter } from './adapters/axios.adapter'
+...
+@Module( {
+    ...,
+    exports: [ AxiosAdapter ]
+} )
+export class CommonModule { }
+```
+
+Lo siguiente es importar el módulo `CommonModule` dentro del módulo de `SeedModule`:
+
+```ts
+import { CommonModule } from 'src/common/common.module'
+...
+@Module( {
+    ...,
+    imports: [ ..., CommonModule ]
+} )
+export class SeedModule { }
+```
+
+Ahora si podemos usar el adaptador dentro del servicio del seed (tener en cuenta que la desestructuración ya fue aplicado en el método del adaptador):
+
+```ts
+import { AxiosAdapter } from 'src/common/adapters/axios.adapter'
+...
+
+@Injectable()
+export class SeedService {
+
+    constructor (
+        private readonly _http: AxiosAdapter,
+        ...
+    ) { }
+
+    async populateDB () {
+        ...
+        const { results } = await this._http.get<IPokeResponse>( `https://pokeapi.co/api/v2/pokemon?limit=2000` )
+        ...
+    }
+}
+```
