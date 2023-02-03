@@ -430,17 +430,19 @@ export class PokemonController {
 Para validar los queryParams vamos a usar un DTO que nos permita controlar los tipos de datos y propiedades que tratan de enviar en la consulta. Este DTO que vamos a crear es muy genérico y no solo se puede usar con los pokemons, sino que se puede usar en cualquier otra consulta de otro módulo, por lo tanto creamos el DTO dentro del módulo `common` llamando el archivo como `dto/pagination.dto.ts`:
 
 ```ts
-import { IsOptional, IsPositive, Min } from "class-validator"
+import { IsNumber, IsOptional, IsPositive, Min } from "class-validator"
 
 export class PaginationDto {
     @IsOptional()
+    @IsNumber()
     @IsPositive()
     @Min( 1 )
-    limit: number
+    limit?: number
 
     @IsOptional()
+    @IsNumber()
     @IsPositive()
-    offset: number
+    offset?: number
 }
 ```
 
@@ -463,3 +465,58 @@ export class PokemonController {
 ```
 
 El problema actual es que los params están llegando como strings y por lo tanto no los reconoce al momento de hacer la validación numérica. La solución la veremos a continuación.
+
+## Transform DTOs
+
+Los parámetros están llegando como string, pero necesitamos que puedan llegar como number. Algo que podemos hacer es transformar los datos de manera global y establecer la conversión implícita, como pros tenemos que es más fácil validar la data de los DTOs, pero su contraparte es que tendrá que consumir más recursos puesto que crea instancias para convertir la data:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe( {
+        ...,
+        transform: true,
+        transformOptions: {
+            enableImplicitConversion: true
+        }
+    } ) )
+    ...
+}
+```
+
+Ahora, dentro del controlador vamos a enviar los params al servicio, con el fin de que este se encargue de la lógica de negocio:
+
+```ts
+@Controller( 'pokemon' )
+export class PokemonController {
+    ...
+    @Get()
+    findAll ( @Query() paginationDto: PaginationDto ) {
+        return this.pokemonService.findAll( paginationDto )
+    }
+    ...
+}
+```
+
+En el servicio establecemos los valores por defecto de las propiedades de la query en caso de que no reciba ningún valor, y establecemos el limit y el offset con dichos valores. Ordenamos la consulta por orden ascendente con la propiedad `number`, y descartamos la propiedad `__v` de los documentos.
+
+```ts
+import { PaginationDto } from 'src/common/dto/pagination.dto'
+...
+
+@Injectable()
+export class PokemonService {
+    ...
+    findAll ( { limit = 10, offset = 0 }: PaginationDto ) {
+        return this._pokemonModel
+            .find()
+            .limit( limit )
+            .skip( offset )
+            .sort( {
+                number: 1
+            } )
+            .select( '-__v' )
+    }
+    ...
+}
+```
