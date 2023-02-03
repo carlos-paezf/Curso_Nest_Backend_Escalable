@@ -29,3 +29,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 06: Generar build de producción básico](06-Generar_build_produccion_basico/README.md)
 - [Sección 07: MongoDB Pokedex](07_MongoDB_Pokedex/README.md)
 - [Sección 08: Seed y Paginación](08_Seed_Paginacion/README.md)
+- [Sección 09: Variables de entorno - Deployment y Dockerizar la aplicación](09_Variables_Entorno_Deployment_Dockerizar/README.md)
