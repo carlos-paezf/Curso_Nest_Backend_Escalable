@@ -37,3 +37,6 @@ lerna-debug.log*
 
 # Bind-volume docker
 /mongo
+
+# Env
+.env
