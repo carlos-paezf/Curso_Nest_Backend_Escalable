@@ -134,8 +134,8 @@ Una solución elegante es mapear las variables de entorno y establecer valores p
 export const EnvConfiguration = () => ( {
     environment: process.env.NODE_ENV || 'dev',
     mongodb: process.env.MONGO_DB,
-    port: process.env.PORT || 3001,
-    defaultLimit: process.env.DEFAULT_LIMIT || 5
+    port: +process.env.PORT || 3001,
+    defaultLimit: +process.env.DEFAULT_LIMIT || 5
 } )
 ```
 
@@ -159,3 +159,74 @@ export class AppModule { }
 ```
 
 Dentro del proyecto ya no vamos a usar más `process.env` para reconocer las variables, lo vamos a reemplazar por un servicio que nos ofrece `ConfigModule`.
+
+## ConfigurationService
+
+`ConfigurationService` es un servicio que nos permite usar las variables mapeadas con anterioridad. Se debe hacer la inyección del mismo dentro de las clases en los que se debe usar, pero antes se debe importar dentro del módulo a usar:
+
+```ts
+@Module( {
+    ...,
+    imports: [
+        ConfigModule,
+        ...
+    ]
+    ...
+} )
+export class PokemonModule { }
+```
+
+Procedemos con la inyección del servicio:
+
+```ts
+import { ConfigService } from '@nestjs/config'
+...
+
+@Injectable()
+export class PokemonService {
+    constructor (
+        ...,
+        private readonly _configService: ConfigService
+    ) { }
+    ...
+}
+```
+
+En estos momentos podemos hacer uso del servicio para obtener las variables definidas en el mapeo:
+
+```ts
+@Injectable()
+export class PokemonService {
+    constructor ( ... ) {
+        const defaultLimit = this._configService.get<number>( 'defaultLimit' )
+        console.log( { defaultLimit, type: typeof defaultLimit } )              // { defaultLimit: 10, type: 'number' }
+    }
+    ...
+}
+```
+
+Para efecto práctico dentro de nuestro proyecto, vamos a usar el valor de la variable en el método correspondiente. En caso de necesitemos dicho valor en varios lugares, podemos crear una propiedad dentro de la clase y asignar su valor dentro del constructor.
+
+```ts
+@Injectable()
+export class PokemonService {
+    private _defaultLimit: number
+
+    constructor ( ... ) {
+        this._defaultLimit = this._configService.get<number>( 'defaultLimit' )
+    }
+    ...
+    findAll ( { limit = this._defaultLimit, offset = 0 }: PaginationDto ) { ... }
+    ...
+}
+```
+
+Debemos tener en cuenta que toda la configuración anterior solo la podemos aplicar dentro de los Building Blocks de Nest, en los demás archivos si podemos hacer uso de `process.env` para obtener las variables de entorno. Tal es el caso del archivo `main.ts` en donde se define el puerto de la aplicación:
+
+```ts
+async function bootstrap () {
+    ...
+    await app.listen( Number( process.env.PORT ) || 3001 )
+    ...
+}
+```
