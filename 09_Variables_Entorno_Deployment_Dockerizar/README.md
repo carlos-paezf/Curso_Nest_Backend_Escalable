@@ -101,3 +101,61 @@ Con las variables siendo reconocidas, podemos aplicar los cambios necesarios en 
 } )
 export class AppModule { }
 ```
+
+## Configuration Loader
+
+Es importante que el `ConfigurationModule` siempre este en el inicio de toda la configuración. Podemos hacer uso de las variables de entorno de manera directa dentro del código, pero el problema será al momento de no tener un valor asignado a la variables, o no tener en si la propia variable.
+
+Por ejemplo, queremos establecer mediante variable de entorno un limite de registros para las consultas GET en donde no se especifique el puerto. Dada la casualidad no se ha definido la variable dentro del archivo `.env`, pero aún así la usamos dentro del método del servicio:
+
+```ts
+@Injectable()
+export class PokemonService {
+    ...
+    findAll ( { limit = +process.env.DEFAULT_LIMIT, offset = 0 }: PaginationDto ) {
+        return this._pokemonModel
+            .find()
+            .limit( limit )
+            .skip( offset )
+            .sort( {
+                number: 1
+            } )
+            .select( '-__v' )
+    }
+    ...
+}
+```
+
+Como la variable `process.env.DEFAULT_LIMIT` no ha sido definida, su valor será `undefined` y al momento de parsearla a numérico tendremos un `NaN`, el cual es reconocido como valido por Mongo y por lo tanto nos retornará todos los documentos almacenados en la colección.
+
+Una solución elegante es mapear las variables de entorno y establecer valores por defecto en caso de ser necesario y lógico en cada variable. Esto lo vamos a aplicar dentro del archivo `config/app.config.ts`, en donde exportamos una función que exporta un objeto con las variables mapeadas:
+
+```ts
+export const EnvConfiguration = () => ( {
+    environment: process.env.NODE_ENV || 'dev',
+    mongodb: process.env.MONGO_DB,
+    port: process.env.PORT || 3001,
+    defaultLimit: process.env.DEFAULT_LIMIT || 5
+} )
+```
+
+Como vemos la mayoría de las variables poseen valores por defecto, excepto la conexión con la base de datos, y esto es por qué queremos lanzar un error ya que la base de datos debería ser lanzada primero.
+
+Ahora, vamos a reconocer esta función dentro del `app.module.ts`:
+
+```ts
+import { EnvConfiguration } from './config/app.config'
+...
+
+@Module( {
+    imports: [
+        ConfigModule.forRoot( {
+            load: [ EnvConfiguration ]
+        } ),
+        ...
+    ]
+} )
+export class AppModule { }
+```
+
+Dentro del proyecto ya no vamos a usar más `process.env` para reconocer las variables, lo vamos a reemplazar por un servicio que nos ofrece `ConfigModule`.
