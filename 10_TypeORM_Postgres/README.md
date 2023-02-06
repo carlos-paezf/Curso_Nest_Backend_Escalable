@@ -42,3 +42,48 @@ module.exports = {
     ...
 };
 ```
+
+## Docker - Instalar y correr Postgres
+
+Podemos hacer la instalación de Postgres en nuestro equipo, pero nos conviene más mantener una imagen en Docker de Postgres, con el objetivo de tener una misma configuración con todo el equipo de desarrollo.
+
+Lo primero será declarar las variables de entorno iniciales en el archivo `.env`:
+
+```env
+DB_PASSWORD = "53CR3T_P455W0RD"
+DB_NAME = "TesloDB"
+DB_PORT = 5433
+```
+
+Creamos el archivo `docker-compose.yaml` en donde tendremos la configuración del servicio de la base de datos. Como tenemos listo el archivo `.env`, podemos hacer uso de sus variables:
+
+```yaml
+version: '3'
+
+services:
+    db:
+        image: postgres:14.3
+        restart: always
+        ports:
+            - "${DB_PORT}:5432"
+        environment:
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        container_name: teslo-db
+        volumes:
+            - ./postgres:/var/lib/postgresql/data
+```
+
+Levantamos el archivo en modo detach con el siguiente comando:
+
+```txt
+$: docker-compose up -d
+```
+
+Podemos usar cualquier programa para visualizar bases de datos, en este caso vamos a usar Table Plus, pero también podríamos usar la imagen de PgAdmin para tener un contenedor que se encargue de dicha funcionalidad.
+
+En caso de que necesitemos bajar el docker-compose y remover todo lo creado por el mismo, usamos el siguiente comando:
+
+```txt
+$: docker-compose down
+```

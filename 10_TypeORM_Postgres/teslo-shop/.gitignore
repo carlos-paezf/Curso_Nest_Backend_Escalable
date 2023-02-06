@@ -2,9 +2,16 @@
 /dist
 /node_modules
 
+# package-versions
 pnpm-lock.yaml
 yarn.lock
 package-lock.json
+
+# environment
+.env
+
+# bind-volumen docker
+postgres/
 
 # Logs
 logs
