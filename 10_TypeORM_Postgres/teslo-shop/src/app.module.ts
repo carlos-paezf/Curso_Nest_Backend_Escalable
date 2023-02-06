@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { JoiValidationSchema } from './config/joi.validation'
+import { ProductsModule } from './products/products.module';
 
 @Module( {
     imports: [
@@ -18,7 +19,9 @@ import { JoiValidationSchema } from './config/joi.validation'
             password: process.env.DB_PASSWORD,
             autoLoadEntities: true,
             synchronize: true
-        } )
+        } ),
+
+        ProductsModule
     ],
 } )
 export class AppModule { }

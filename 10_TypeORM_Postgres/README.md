@@ -175,3 +175,49 @@ export class AppModule { }
 ```
 
 La propiedad `synchronize` es útil en modo desarrollo, ya que a medida que avanzamos en el proyecto, la base de datos recibe los cambios correspondientes a las tablas y demás con ayuda de la propiedad `autoLoadEntities`. Pero, cuando estamos en la fase de producción, es preferible dejar la variable en `false` y trabajar todo mediante migraciones.
+
+## TypeORM - Entity - Product
+
+Vamos a crear un resource para los productos con el siguiente comando:
+
+```txt
+$: nest g res products --no-spec
+```
+
+Un entity es una representación de una tabla en la base de datos, para el caso de TypeORM debemos usar el decorador `@Entity` para que sea reconocido como entidad dentro de la base de datos. Vamos a definir la entidad de productos, un id auto-generado de tipo uuid, y una columna de titulo único en la base de datos:
+
+```ts
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+
+
+@Entity()
+export class Product {
+    @PrimaryGeneratedColumn( 'uuid' )
+    id: string
+
+    @Column( 'text', {
+        unique: true
+    } )
+    title: string
+}
+```
+
+Para que TypeORM reconozca la entidad de manera automática, y por lo tanto cree un tabla para la misma dentro de la base de datos (recordando que en la configuración inicial dejamos en `true` la propiedad `synchronize`), debemos importar `TypeOrmModule` dentro del módulo de productos, y definir un arreglo con las entidades que se definan dentro del mismo:
+
+```ts
+import { TypeOrmModule } from '@nestjs/typeorm'
+import { Product } from './entities/product.entity'
+...
+
+@Module( {
+    ...,
+    imports: [
+        TypeOrmModule.forFeature( [
+            Product
+        ] )
+    ]
+} )
+export class ProductsModule { }
+```
+
+Al momento que se recarga la aplicación para reconocer los cambios, podremos observar que en la base de datos se definieron algunas funciones para las llaves uuid, pero lo más relevante en este momento, es que tenemos la tabla de productos. Si actualizamos las propiedades de la entidad, entonces la base de datos reconocerá el cambio de manera inmediata.
