@@ -270,3 +270,9 @@ export class AppModule { }
 ```
 
 Es importante reconocer la prioridad de ejecución entre los archivos `app.config.ts` y `joi.validation.ts`, puesto que el segundo archivo se ejecuta primero y por lo tanto define el valor de las variables de entorno que no están definidas, pero se deben mantener las validaciones con mucho cuidado en ambos archivos en caso de querer usarlos a la vez, especialmente en el tipo de dato.
+
+## ENV Template
+
+Siempre es aconsejable que se tenga un archivo que sirva de ejemplo o template de las variables de entorno, puesto que el archivo `.env` no se debe cargar a un espacio público. Podemos copiar el valor de las variables que no afectan de manera directa la información de la aplicación, como por ejemplo el puerto de la aplicación o el limite de resultados, pero, debemos omitir el valor de las variables que requieren un gran secreto, como por ejemplo la firma de los JWT.
+
+También es normal definir los pasos necesarios para la configuración de la aplicación dentro de un archivo `README.md`, con el fin de que cualquier desarrollador pueda levantar de manera correcta el proyecto.
