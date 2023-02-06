@@ -350,3 +350,70 @@ mongo/
 .gitignore
 pnpm-lock.yaml
 ```
+
+## Definir la construcción de la imagen
+
+En la lección anterior definimos algunos pasos para la creación de la imagen, pero lo vamos a mejorar para que sea multi-stage y de esta manera tener una imagen más liviana y precisa.
+
+```Dockerfile
+# Install dependencies only when needed
+FROM node:18-alpine3.15 AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json ./
+RUN yarn install --frozen-lockfile
+
+
+# Build the app with cache dependencies
+FROM node:18-alpine3.15 AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN yarn build
+
+
+# Production image, copy all the files and run nest
+FROM node:18-alpine3.15 AS runner
+# Set working directory
+WORKDIR /usr/src/app
+COPY package.json yarn.lock ./
+RUN yarn install --prod
+COPY --from=builder /app/dist ./dist
+
+CMD [ "node","dist/main" ]
+```
+
+Con lo anterior tenemos 3 fases: la primera se encarga unicamente de la instalación de dependencias, la segunda se encarga de copiar esas dependencias y construir el directorio `dist`, y la tercera se encarga de instalar las dependencias necesarias para producción y de copiar y ejecutar la carpeta de distribución.
+
+Ahora, vamos a crear un archivo llamado `docker-compose.prod.yaml` y definimos el servicio de la base de datos que ya teniamos, pero adicional creamos un servicio para nuestra aplicación:
+
+```yaml
+version: '3'
+
+services:
+    pokedexapp:
+        depends_on:
+            - db
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: pokedex-docker
+        container_name: pokedexapp
+        restart: always # reiniciar el contenedor si se detiene
+        ports:
+            - "${PORT}:${PORT}"
+        environment:
+            MONGO_DB: ${MONGO_DB}
+            PORT: ${PORT}
+            DEFAULT_LIMIT: ${DEFAULT_LIMIT}
+
+    db:
+        image: mongo:5
+        container_name: mongo-poke
+        restart: always
+        ports:
+            - 27017:27017
+        environment:
+            MONGODB_DATABASE: nest-pokemon
+```
