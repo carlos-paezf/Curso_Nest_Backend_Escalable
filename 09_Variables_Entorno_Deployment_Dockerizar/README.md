@@ -276,3 +276,11 @@ Es importante reconocer la prioridad de ejecución entre los archivos `app.confi
 Siempre es aconsejable que se tenga un archivo que sirva de ejemplo o template de las variables de entorno, puesto que el archivo `.env` no se debe cargar a un espacio público. Podemos copiar el valor de las variables que no afectan de manera directa la información de la aplicación, como por ejemplo el puerto de la aplicación o el limite de resultados, pero, debemos omitir el valor de las variables que requieren un gran secreto, como por ejemplo la firma de los JWT.
 
 También es normal definir los pasos necesarios para la configuración de la aplicación dentro de un archivo `README.md`, con el fin de que cualquier desarrollador pueda levantar de manera correcta el proyecto.
+
+## MongoAtlas - MongoDB en la nube
+
+Vamos a crear una base de datos en Mongo Atlas, para lo cual ingresamos a dicha aplicación, creamos una cuenta y añadimos un nuevo cluster de tipo `Shared` el cual es gratuito. La mayoría de las configuraciones las dejamos por defecto, excepto, el nombre del cluster.
+
+Lo siguiente es crear un nuevo usuario de base de datos, podemos usar el admin, pero es preferible tener un usuario dedicado para nuestro cluster. Tanto el usuario como la contraseña que definamos, debemos tenerlas almacenadas dentro del archivo de variables de entorno. Luego, asignamos los permisos sobre las bases de datos que puede tener el nuevo usuario.
+
+Terminada la creación del cluster, obtenemos el link de conexión al presionar la opción de conectar. Dicha cadena de conexión también la guardamos dentro de las variables de entorno, reemplazando la base de datos que teníamos para hacer las pruebas. Debemos reemplazar las secciones de `<username>` y `<password>`
