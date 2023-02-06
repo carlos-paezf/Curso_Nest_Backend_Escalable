@@ -377,7 +377,7 @@ RUN yarn build
 FROM node:18-alpine3.15 AS runner
 # Set working directory
 WORKDIR /usr/src/app
-COPY package.json yarn.lock ./
+COPY package.json ./
 RUN yarn install --prod
 COPY --from=builder /app/dist ./dist
 
@@ -417,3 +417,27 @@ services:
         environment:
             MONGODB_DATABASE: nest-pokemon
 ```
+
+## Construir la imagen
+
+Creamos un nuevo archivo llamado `.env.prod`, dentro del cual copiamos las mismas variables que tenemos dentro del archivo `.env`, pero tomando el valor de lo que publiquemos en producción, por ejemplo el almacenamiento en la base de datos, la cual queremos conectar al servicio que se encuentra en la misma network del servicio app:
+
+```env
+MONGO_DB = "mongodb://mongo-poke:27017/nest-pokemon"
+PORT = 3000
+DEFAULT_LIMIT = 10
+```
+
+Para realizar la construcción y ejecución de la imagen y servicios debemos usar el siguiente comando:
+
+```txt
+$: docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+```
+
+Si solo queremos realizar la ejecución en modo Detach usamos el siguiente comando:
+
+```txt
+$: docker-compose -f docker-compose.prod.yaml --env-file .env.prod up -d
+```
+
+Ya podemos volver a probar la aplicación en el endpoint `http://localhost:3000/`
