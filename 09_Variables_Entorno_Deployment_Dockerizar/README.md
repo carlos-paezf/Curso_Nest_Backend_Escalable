@@ -230,3 +230,43 @@ async function bootstrap () {
     ...
 }
 ```
+
+## Joi - ValidationSchema
+
+Si queremos ser más estrictos con el valor de las variables de entorno y manejar los errores del mismo, podemos usar la librería `joi` con el siguiente comando:
+
+```txt
+$: pnpm install joi
+```
+
+Con el paquete instalado, creamos el archivo `config/joi.validation.ts` en donde establecemos las reglas de validación para las variables:
+
+```ts
+import * as Joi from 'joi'
+
+export const JoiValidationSchema = Joi.object( {
+    MONGO_DB: Joi.required(),
+    PORT: Joi.number().default( 3002 ),
+    DEFAULT_LIMIT: Joi.number().default( 6 )
+} )
+```
+
+Este esquema lo usamos en `app.module.ts`:
+
+```ts
+import { JoiValidationSchema } from './config/joi.validation'
+...
+
+@Module( {
+    imports: [
+        ConfigModule.forRoot( {
+            load: [ EnvConfiguration ],
+            validationSchema: JoiValidationSchema
+        } ),
+        ...
+    ]
+} )
+export class AppModule { }
+```
+
+Es importante reconocer la prioridad de ejecución entre los archivos `app.config.ts` y `joi.validation.ts`, puesto que el segundo archivo se ejecuta primero y por lo tanto define el valor de las variables de entorno que no están definidas, pero se deben mantener las validaciones con mucho cuidado en ambos archivos en caso de querer usarlos a la vez, especialmente en el tipo de dato.
