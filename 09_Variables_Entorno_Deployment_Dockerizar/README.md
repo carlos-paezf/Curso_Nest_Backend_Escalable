@@ -441,3 +441,26 @@ $: docker-compose -f docker-compose.prod.yaml --env-file .env.prod up -d
 ```
 
 Ya podemos volver a probar la aplicación en el endpoint `http://localhost:3000/`
+
+## Conservar la base de datos y analizar imagen
+
+Cada que eliminamos el servicio de la base de datos, ya sea por qué usamos una nueva versión de la imagen o cualquier otra situación, pero queremos mantener los datos al momento de volver a subir el servicio, debemos habilitar el volumen dentro del archivo `docker-compose.prod.yaml`:
+
+```yaml
+version: '3'
+
+services:
+    ...
+    db:
+        ...
+        volumes:
+            - ./mongo:/data/db
+```
+
+Podemos analizar el contenido de un contenedor usando el siguiente comando:
+
+```txt
+$: docker exec -it <id del container> /bin/sh
+```
+
+Normalmente se usa la exploración del contenedor para asegurarnos que los archivos se han copiado correctamente.
