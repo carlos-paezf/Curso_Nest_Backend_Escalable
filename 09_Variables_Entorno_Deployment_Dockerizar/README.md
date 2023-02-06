@@ -284,3 +284,28 @@ Vamos a crear una base de datos en Mongo Atlas, para lo cual ingresamos a dicha 
 Lo siguiente es crear un nuevo usuario de base de datos, podemos usar el admin, pero es preferible tener un usuario dedicado para nuestro cluster. Tanto el usuario como la contraseña que definamos, debemos tenerlas almacenadas dentro del archivo de variables de entorno. Luego, asignamos los permisos sobre las bases de datos que puede tener el nuevo usuario.
 
 Terminada la creación del cluster, obtenemos el link de conexión al presionar la opción de conectar. Dicha cadena de conexión también la guardamos dentro de las variables de entorno, reemplazando la base de datos que teníamos para hacer las pruebas. Debemos reemplazar las secciones de `<username>` y `<password>`
+
+## Desplegar aplicación en la nube
+
+Con la base de datos en la nube, podemos dar paso al cargue del proyecto en la nube. Lo primero será ejecutar el comando que nos ayuda a crear el directorio de distribución:
+
+```txt
+$: pnpm build
+```
+
+De manera automática Heroku reconoce el comando `build` y por lo tanto se encarga de ejecutarlo. Al momento de realizar esta lección, Heroku ya no cuenta con un plan gratuito, por lo que realizaremos el despliegue con [Render](https://render.com/), procurando usar el plan gratuito, ya que no será un despliegue comercial.
+
+Lo primero es tener el proyecto en un repositorio aislado. Posteriormente se crea una cuenta en Render y se selecciona el plan Individual, el cual es gratuito. Lo siguiente es crear un nuevo Web Service en donde se selecciona el repositorio, a continuación se definen algunas propiedades para el despliegue:
+
+| Key | Value |
+| --- | ----- |
+| Name | `pokedex` |
+| Environment | `Node` |
+| Build Command | `npm i @nestjs/cli; npm i; npm run build` o `yarn add @nestjs/cli; yarn; yarn build` |
+| Start Command | `npm run start:prod` o `yarn start:prod` |
+| Instance Type | `Free` |
+| Advance > Add Secret File | Nombre del archivo: `.env`. Contenido: Contenido del archivo secreto `.env`. Este paso se puede reemplazar por el ingreso uno a uno de las variables en Advance > Add Environment Variable |
+
+Con lo anterior, procedemos a crear el Web Service y debemos estar atentos a los logs, cualquier error durante la etapa de despliegue debe ser corregido para que de manera automática se haga un nuevo deploy.
+
+Cuando la aplicación sea desplegada de manera exitosa, podemos ingresar a la url que nos ofrece el despliegue, en mi caso tengo acceso al siguiente dominio: <https://pokedex-2mq8.onrender.com/>
