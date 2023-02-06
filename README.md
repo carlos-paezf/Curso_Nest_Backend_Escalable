@@ -30,3 +30,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 07: MongoDB Pokedex](07_MongoDB_Pokedex/README.md)
 - [Sección 08: Seed y Paginación](08_Seed_Paginacion/README.md)
 - [Sección 09: Variables de entorno - Deployment y Dockerizar la aplicación](09_Variables_Entorno_Deployment_Dockerizar/README.md)
+- [Sección 10: TypeORM - Postgres](10_TypeORM_Postgres/README.md)
