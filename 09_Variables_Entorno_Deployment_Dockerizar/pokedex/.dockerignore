@@ -1,0 +1,6 @@
+dist/
+node_modules/
+mongo/
+.git/
+.gitignore
+pnpm-lock.yaml

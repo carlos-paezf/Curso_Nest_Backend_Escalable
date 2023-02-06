@@ -309,3 +309,44 @@ Lo primero es tener el proyecto en un repositorio aislado. Posteriormente se cre
 Con lo anterior, procedemos a crear el Web Service y debemos estar atentos a los logs, cualquier error durante la etapa de despliegue debe ser corregido para que de manera automática se haga un nuevo deploy.
 
 Cuando la aplicación sea desplegada de manera exitosa, podemos ingresar a la url que nos ofrece el despliegue, en mi caso tengo acceso al siguiente dominio: <https://pokedex-2mq8.onrender.com/>
+
+## Dockerizar - Dockerfile
+
+Vamos a dockerizar nuestra aplicación, para lo cual creamos el archivo `Dockerfile` en la raíz de nuestro proyecto. En dicho archivo vamos a añadir las siguientes instrucciones:
+
+```Dockerfile
+FROM node:18-alpine3.15
+
+# Set working directory
+RUN mkdir -p /var/www/pokedex
+WORKDIR /var/www/pokedex
+
+# Copaiar el directorio y su contenido
+COPY . ./var/www/pokedex
+COPY package.json tsconfig.json tsconfig.build.json /var/www/pokedex/
+RUN yarn install --prod
+RUN yarn build
+
+# Dar permiso para ejecutar la aplicación
+RUN adduser --disabled-password pokeuser
+RUN chown -R pokeuser:pokeuser /var/www/pokedex
+USER pokeuser
+
+# Limpiar el cache
+RUN yarn cache clean --force
+
+EXPOSE 3000
+
+CMD [ "yarn", "start" ]
+```
+
+También creamos el archivo `.dockerignore` y añadimos los directorios y archivos que no queremos cargar dentro la imagen de docker:
+
+```.dockerignore
+dist/
+node_modules/
+mongo/
+.git/
+.gitignore
+pnpm-lock.yaml
+```
