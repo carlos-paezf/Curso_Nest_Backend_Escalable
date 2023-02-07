@@ -441,3 +441,119 @@ Response:
 ```
 
 Actualmente si intentamos enviar un valor nulo en un campo obligatorio, o un valor duplicado en un indice único, se va a generar un error en la base de datos, y nosotros recibiremos un status 500, por lo que más adelante evitaremos esto tratando los errores.
+
+## Manejo de errores
+
+Para tratar los errores que nos lanza la base de datos, podríamos generar consultas que se encarguen de evaluar los casos de error, pero sería atacar de manera insistente la base de datos.
+
+Lo primero que haremos es crear un logger más elegante para nuestros errores, para ello creamos una instancia de Logger, indicándole que el contexto sea el servicio de productos:
+
+```ts
+import { ..., Logger } from '@nestjs/common'
+...
+@Injectable()
+export class ProductsService {
+    private readonly _logger = new Logger( 'ProductsService' )
+    ...
+}
+```
+
+Ahora, podemos reemplazar el `console.error` por el uso de la instancia de logger para mostrar el error:
+
+```ts
+@Injectable()
+export class ProductsService {
+    private readonly _logger = new Logger( 'ProductsService' )
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try { ... } catch ( error ) {
+            this._logger.error( error )
+            throw new InternalServerErrorException()
+        }
+    }
+    ...
+}
+```
+
+Teniendo el logger, podemos desinstalar el paquete de colors y seguir manejando el logger, con el cual tendremos una impresión más elegante.
+
+Podemos controlar aún más los errores al identificar el código de los mismos, y para ello tenemos el listado de [PostgreSQL Error Codes](https://www.postgresql.org/docs/current/errcodes-appendix.html):
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try { ... } catch ( error ) {
+            if ( error.code === '23505' )
+                throw new BadRequestException( error.detail )
+
+            if ( error.code === '23502' )
+                throw new BadRequestException( error.detail )
+
+            this._logger.error( error )
+            throw new InternalServerErrorException( "Unexpected error, check server logs" )
+        }
+    }
+```
+
+Algo que debemos tener en cuenta es que este código se puede usar en diversas partes, por lo que para aplicar el principio DRY vamos a crear un método que se encargue del control de errores:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try { ... } catch ( error ) {
+            this._handleDBException( error )
+        }
+    }
+    ...
+    private _handleDBException ( error: any ) {
+        if ( error.code === '23505' )
+            throw new BadRequestException( error.detail )
+
+        if ( error.code === '23502' )
+            throw new BadRequestException( error.detail )
+
+        this._logger.error( error )
+        throw new InternalServerErrorException( "Unexpected error, check server logs" )
+    }
+}
+```
+
+Para no tener "códigos mágicos" y poder identificar el error que estamos tratando de controlar, podemos crear un enum en donde asignamos un nombre más claro a cada error, y este archivo lo podemos guardar en el módulo commons, el cual creamos con el comando:
+
+```txt
+$: nest g mo commons
+```
+
+El enum tendría la siguiente forma:
+
+```ts
+export enum PostgreSQLErrorCodes {
+    NOT_NULL_VIOLATION = '23502',
+    UNIQUE_VIOLATION = '23505'
+}
+```
+
+La implementación en nuestro último método de arriba sería la siguiente:
+
+```ts
+import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
+...
+@Injectable()
+export class ProductsService {
+    ...
+    private _handleDBException ( error: any ) {
+        if ( error.code === PostgreSQLErrorCodes.NOT_NULL_VIOLATION )
+            throw new BadRequestException( error.detail )
+
+        if ( error.code === PostgreSQLErrorCodes.UNIQUE_VIOLATION )
+            throw new BadRequestException( error.detail )
+
+        this._logger.error( error )
+        throw new InternalServerErrorException( "Unexpected error, check server logs" )
+    }
+}
+```

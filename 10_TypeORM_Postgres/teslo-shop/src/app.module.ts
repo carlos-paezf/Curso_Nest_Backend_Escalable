@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { JoiValidationSchema } from './config/joi.validation'
 import { ProductsModule } from './products/products.module';
+import { CommonsModule } from './commons/commons.module';
 
 @Module( {
     imports: [
@@ -21,7 +22,9 @@ import { ProductsModule } from './products/products.module';
             synchronize: true
         } ),
 
-        ProductsModule
+        ProductsModule,
+
+        CommonsModule
     ],
 } )
 export class AppModule { }
