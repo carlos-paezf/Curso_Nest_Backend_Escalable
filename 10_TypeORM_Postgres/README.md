@@ -270,3 +270,73 @@ export class Product {
     gender: string
 }
 ```
+
+## Create Product DTO
+
+Vamos a configurar el global prefix en `main.ts`:
+
+```ts
+async function bootstrap () {
+    ...
+    app.setGlobalPrefix( 'api' )
+    ...
+}
+```
+
+Para la validación de los datos vamos a usar los 2 paquetes de secciones anteriores, para lo cual usamos el siguiente comando:
+
+```txt
+$: pnpm i class-validator class-transformer
+```
+
+Vamos a establecer de manera global que se use el pipe de validación para tener una lista blanca para cada entidad y prohibir los elementos que no se encuentren en ella:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes(
+        new ValidationPipe( {
+            whitelist: true,
+            forbidNonWhitelisted: true
+        } )
+    )
+    ...
+}
+```
+
+Luego, vamos a modificar el archivo `create-product.dto.ts`:
+
+```ts
+import { IsArray, IsIn, IsInt, IsNumber, IsOptional, IsPositive, IsString, MinLength } from 'class-validator'
+
+export class CreateProductDto {
+    @IsString()
+    @MinLength( 1 )
+    title: string
+
+    @IsOptional()
+    @IsNumber()
+    @IsPositive()
+    price?: number
+
+    @IsOptional()
+    @IsString()
+    description?: string
+
+    @IsOptional()
+    @IsString()
+    slug?: string
+
+    @IsOptional()
+    @IsInt()
+    @IsPositive()
+    stock?: number
+
+    @IsString( { each: true } )
+    @IsArray()
+    size: string[]
+
+    @IsIn( [ 'men', 'women', 'kid', 'unisex' ] )
+    gender: string
+}
+```
