@@ -221,3 +221,52 @@ export class ProductsModule { }
 ```
 
 Al momento que se recarga la aplicación para reconocer los cambios, podremos observar que en la base de datos se definieron algunas funciones para las llaves uuid, pero lo más relevante en este momento, es que tenemos la tabla de productos. Si actualizamos las propiedades de la entidad, entonces la base de datos reconocerá el cambio de manera inmediata.
+
+## Entidad sin relaciones
+
+Vamos a terminar de manera parcial la entidad, puesto que aún no vamos a crear las relaciones con otras entidades:
+
+```ts
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm"
+
+
+@Entity()
+export class Product {
+    @PrimaryGeneratedColumn( 'uuid' )
+    id: string
+
+    @Column( 'text', {
+        unique: true
+    } )
+    title: string
+
+    @Column( 'numeric', {
+        default: 0
+    } )
+    price: number
+
+    @Column( {
+        type: 'text',
+        nullable: true
+    } )
+    description: string
+
+    @Column( 'text', {
+        unique: true
+    } )
+    slug: string
+
+    @Column( 'int', {
+        default: 0
+    } )
+    stock: number
+
+    @Column( 'text', {
+        array: true
+    } )
+    sizes: string[]
+
+    @Column( 'text' )
+    gender: string
+}
+```
