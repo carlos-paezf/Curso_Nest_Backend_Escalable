@@ -240,7 +240,7 @@ export class Product {
     } )
     title: string
 
-    @Column( 'numeric', {
+    @Column( 'float', {
         default: 0
     } )
     price: number
@@ -334,9 +334,110 @@ export class CreateProductDto {
 
     @IsString( { each: true } )
     @IsArray()
-    size: string[]
+    sizes: string[]
 
     @IsIn( [ 'men', 'women', 'kid', 'unisex' ] )
     gender: string
 }
 ```
+
+## Insertar usando TypeORM
+
+Nuestros controladores siempre deben tener la menor cantidad de lógica, por lo tanto la interacción con la entidad se debe realizar en el servicio. Vamos a implementar el patrón repositorio para realizar las consultas a la base de datos. Anteriormente se tenía que crear una clase manualmente que se encargara de la creación del repositorio, pero actualmente Nest nos permite inyectar un repositorio de manera sencilla:
+
+```ts
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { Product } from './entities/product.entity'
+...
+
+@Injectable()
+export class ProductsService {
+    constructor ( @InjectRepository( Product ) private readonly _productRepository: Repository<Product> ) { }
+    ...
+}
+```
+
+Ahora procedemos a definir el servicio de creación. Dentro de una sentencia `try...catch` lanzamos una excepción en caso de que ocurra en error, pero si todo va bien, creamos una instancia de la entidad y luego impactamos la base de datos con dicha instancia, y retornamos la instancia creada:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try {
+            const product = this._productRepository.create( createProductDto )
+            await this._productRepository.save( product )
+            return product
+        } catch ( error ) {
+            console.error( error )
+            throw new InternalServerErrorException()
+        }
+    }
+    ...
+}
+```
+
+Para mejorar un poco las impresiones en consola, vamos a usar el paquete `colors`, para lo cual hacemos la instalación del mismo con el siguiente comando:
+
+```txt
+$: pnpm i colors
+```
+
+En el caso del método anterior usaríamos colors de la siguiente manera:
+
+```ts
+import { red } from 'colors'
+...
+
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try { ... } catch ( error ) {
+            console.error( red("Error in ProductsService:create = "), error )
+            throw new InternalServerErrorException()
+        }
+    }
+    ...
+}
+```
+
+Ahora podemos realizar una petición POST al endpoint `http://localhost:3000/api/products` con el siguiente Body, y obtendremos un status 201 con la información del producto creado:
+
+Body:
+
+```json
+{
+    "title": "New Product",
+    "slug": "new_product",
+    "sizes": [
+        "SM",
+        "M",
+        "L"
+    ],
+    "gender": "men",
+    "price": 123.4
+}
+```
+
+Response:
+
+```json
+{
+    "title": "New Product",
+    "slug": "new_product",
+    "sizes": [
+        "SM",
+        "M",
+        "L"
+    ],
+    "gender": "men",
+    "description": null,
+    "id": "b7f1c8b3-3c51-4466-a0d4-ac61e28c0109",
+    "price": 123.4,
+    "stock": 0
+}
+```
+
+Actualmente si intentamos enviar un valor nulo en un campo obligatorio, o un valor duplicado en un indice único, se va a generar un error en la base de datos, y nosotros recibiremos un status 500, por lo que más adelante evitaremos esto tratando los errores.
