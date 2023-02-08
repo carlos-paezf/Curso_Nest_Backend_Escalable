@@ -557,3 +557,69 @@ export class ProductsService {
     }
 }
 ```
+
+## BeforeInsert y BeforeUpdate
+
+Cuando intentamos crear un producto sin la propiedad `slug` obtenemos un error ya que es obligatoria en la base de datos, pero queremos que esta propiedad sea autogenerada con base en el titulo, y esto debe pasar al momento de crear o actualizar un registro.
+
+Una opción es hacer este procedimiento antes de crear la instancia en el método de creación o actualización del servicio:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try {
+            if ( !createProductDto.slug ) 
+                createProductDto.slug = createProductDto.title
+
+            createProductDto.slug = createProductDto.slug
+                .toLowerCase()
+                .replaceAll( " ", "_" )
+                .replaceAll( "'", '' )
+            
+            const product = this._productRepository.create( createProductDto )
+            await this._productRepository.save( product )
+            return product
+        } catch ( error ) {
+            this._handleDBException( error )
+        }
+    }
+    ...
+}
+```
+
+En caso de que la función `replaceAll()` no sea reconocida y aparezca este error `No existe la propiedad "replaceAll" en el tipo "string". ¿Necesita cambiar la biblioteca de destino? Pruebe a cambiar la opción del compilador "lib" a "es2021" o posterior.`, debemos ir al archivo `tsconfig.json` y modificar lo siguiente:
+
+```json
+{
+    "compilerOptions": {
+        ...,
+        "target": "es2021",
+        ...
+    }
+}
+```
+
+Lo anterior funciona bien, pero lo podemos hacer mejor al crear un procedimiento que se encargue de dicha funcionalidad antes de realizar la inserción en la base de datos. Para ello vamos a la entidad de productos y usamos el decorador `@BeforeInsert()`:
+
+```ts
+import { BeforeInsert, ... } from "typeorm"
+
+@Entity()
+export class Product {
+    ...
+    @BeforeInsert()
+    checkSlugInsert () {
+        if ( !this.slug )
+            this.slug = this.title
+
+        this.slug = this.slug
+            .toLowerCase()
+            .replaceAll( " ", "_" )
+            .replaceAll( "'", '' )
+    }
+}
+```
+
+Si intentamos realizar la inserción de un nuevo registro, si enviamos el slug, lo va a normalizar como lo necesitamos, pero si no le enviamos esa propiedad, usará el titulo para crear el slug, y todo esto si tocar el servicio.
