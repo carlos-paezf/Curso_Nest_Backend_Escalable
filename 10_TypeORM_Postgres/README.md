@@ -862,3 +862,63 @@ export class ProductsService {
     ...
 }
 ```
+
+## Update en TypeORM
+
+Para actualizar debemos tener en cuenta que todos los campos pueden ser opcionales, pero debe tener tener restricciones. En este caso queremos que el usuario nos envié solo el UUID del producto a actualizar, por lo que dentro del controlador tenemos esta lógica:
+
+```ts
+@Controller( 'products' )
+export class ProductsController {
+    ...
+    @Patch( ':id' )
+    update ( @Param( 'id', ParseUUIDPipe ) id: string, @Body() updateProductDto: UpdateProductDto ) {
+        return this.productsService.update( id, updateProductDto )
+    }
+    ...
+}
+```
+
+Para la actualización en el servicio, usaremos el método `preload()` del repositorio de productos. Esta función crea una nueva instancia, la cual si existen en la base de datos carga todo lo relacionado a la misma y reemplaza todos los nuevos valores. Si el productos no existe, entonces vamos a cargar un status code 404 para indicarle al usuario que no se encontró el elemento, pero en caso contrario entonces guarda el elemento.
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const product = await this._productRepository.preload( {
+            id, ...updateProductDto
+        } )
+
+        if ( !product )
+            throw new NotFoundException( `Product with id '${ id }' not found` )
+
+        return await this._productRepository.save( product )
+    }
+    ...
+}
+```
+
+Para controlar los errores en caso de valores duplicados, o cualquier otro error desde la base de datos, hacemos uso de la sentencia `try...catch`:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const product = await this._productRepository.preload( {
+            id, ...updateProductDto
+        } )
+
+        if ( !product )
+            throw new NotFoundException( `Product with id '${ id }' not found` )
+
+        try {
+            return await this._productRepository.save( product )
+        } catch ( error ) {
+            this._handleDBException( error )
+        }
+    }
+    ...
+}
+```
