@@ -6,6 +6,7 @@ import { UpdateProductDto } from './dto/update-product.dto'
 import { Product } from './entities/product.entity'
 import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
 import { isUUID } from 'class-validator'
+import { PaginationDto } from '../commons/dto/pagination.dto'
 
 @Injectable()
 export class ProductsService {
@@ -23,11 +24,13 @@ export class ProductsService {
         }
     }
 
-    async findAll () {
-        const { 0: data, 1: count } = await this._productRepository.findAndCount()
-        if ( !data.length || count == 0 )
+    async findAll ( { limit = 10, offset = 0 }: PaginationDto ) {
+        const { 0: data, 1: totalResults } = await this._productRepository.findAndCount( {
+            take: limit, skip: offset
+        } )
+        if ( !data.length || totalResults == 0 )
             throw new NotFoundException( `There aren't results for the search` )
-        return { count, data }
+        return { limit, offset, partialResults: data.length, totalResults, data }
     }
 
     async findOne ( term: string ) {

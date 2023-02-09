@@ -726,3 +726,93 @@ export class ProductsController {
     }
 }
 ```
+
+## Paginar en TypeORM
+
+Vamos a paginar el método `findAll`, para lo cual primero creamos el DTO de paginación dentro del módulo `commons`:
+
+```ts
+import { IsNumber, IsOptional, IsPositive } from 'class-validator'
+
+export class PaginationDto {
+    @IsOptional()
+    @IsPositive()
+    limit?: number
+
+    @IsOptional()
+    @IsNumber()
+    @Min( 0 )
+    offset?: number
+}
+```
+
+Debemos recordar que los parámetros que se envían en la petición, son recibidos como string por nuestro servidor, y en el proyecto de Pokedex nosotros controlábamos está situación dentro de la validación global, pero esto gasta más recursos del equipo:
+
+```ts
+async function bootstrap () {
+    ...
+    app.useGlobalPipes( new ValidationPipe( {
+        ...,
+        transform: true,
+        transformOptions: {
+            enableImplicitConversion: true
+        }
+    } ) )
+    ...
+}
+```
+
+La solución que usa menos recursos es transformar el query desde el DTO:
+
+```ts
+import { Type } from 'class-transformer'
+...
+
+export class PaginationDto {
+    @Type( () => Number )
+    ...
+    limit?: number
+
+    @Type( () => Number )
+    ...
+    offset?: number
+}
+```
+
+Ahora si podemos usar el DTO dentro del controlador:
+
+```ts
+import { PaginationDto } from 'src/commons/dto/pagination.dto'
+...
+
+@Controller( 'products' )
+export class ProductsController {
+    ...
+    @Get()
+    findAll ( @Query() paginationDto: PaginationDto ) {
+        return this.productsService.findAll( paginationDto )
+    }
+    ...
+}
+```
+
+Y por supuesto, aplicamos la actualización en el servicio:
+
+```ts
+import { PaginationDto } from '../commons/dto/pagination.dto'
+...
+
+@Injectable()
+export class ProductsService {
+    ...
+    async findAll ( { limit = 10, offset = 0 }: PaginationDto ) {
+        const { 0: data, 1: count } = await this._productRepository.findAndCount( {
+            take: limit, skip: offset
+        } )
+        if ( !data.length || count == 0 )
+            throw new NotFoundException( `There aren't results for the search` )
+        return { limit, offset, partialResults: data.length, totalResults, data }
+    }
+    ...
+}
+```
