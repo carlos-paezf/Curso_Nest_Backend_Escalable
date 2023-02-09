@@ -1,12 +1,13 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { isUUID } from 'class-validator'
 import { Repository } from 'typeorm'
+
+import { PaginationDto } from '../commons/dto/pagination.dto'
+import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { Product } from './entities/product.entity'
-import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
-import { isUUID } from 'class-validator'
-import { PaginationDto } from '../commons/dto/pagination.dto'
 
 @Injectable()
 export class ProductsService {

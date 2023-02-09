@@ -922,3 +922,25 @@ export class ProductsService {
     ...
 }
 ```
+
+## BeforeUpdate
+
+Tenemos que validar el slug al momento de actualizar, puesto lo queremos con el estilo que nosotros deseamos. Para esto, iremos a la entidad y realizamos el siguiente cambio:
+
+```ts
+import { ..., BeforeUpdate } from "typeorm"
+
+@Entity()
+export class Product {
+    ...
+    @BeforeUpdate()
+    checkSlugUpdate () {
+        this.slug = this.slug
+            .toLowerCase()
+            .replaceAll( " ", "_" )
+            .replaceAll( "'", '' )
+    }
+}
+```
+
+No necesitamos validar si viene o no el slug, por qué ya estamos seguros de que dicha propiedad ya se encuentra o en la instancia que se encuentra en la base de datos, o en el objeto enviado en la petición.
