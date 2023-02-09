@@ -4,5 +4,18 @@
     "markdownlint.config": {
         // Ignorar el error de uso de tags HTML en un archivo Markdown
         "MD033": false
-    }
+    },
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5433,
+            "password": "53CR3T_P455W0RD",
+            "askForPassword": false,
+            "driver": "PostgreSQL",
+            "name": "TesloShop",
+            "database": "teslo-db",
+            "username": "nest-user"
+        }
+    ]
 }

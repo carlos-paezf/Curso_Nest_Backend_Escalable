@@ -623,3 +623,106 @@ export class Product {
 ```
 
 Si intentamos realizar la inserción de un nuevo registro, si enviamos el slug, lo va a normalizar como lo necesitamos, pero si no le enviamos esa propiedad, usará el titulo para crear el slug, y todo esto si tocar el servicio.
+
+## Get y Delete - TypeORM
+
+Vamos a implementar la lógica de Obtener todos (sin paginación), Obtener por (id y slug), y Remover. Con esto mente, vamos al servicio de los productos y añadimos lo siguiente:
+
+```ts
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common'
+import { InjectRepository } from '@nestjs/typeorm'
+import { Repository } from 'typeorm'
+import { CreateProductDto } from './dto/create-product.dto'
+import { UpdateProductDto } from './dto/update-product.dto'
+import { Product } from './entities/product.entity'
+import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
+import { isUUID } from 'class-validator'
+
+@Injectable()
+export class ProductsService {
+    ...
+    async findAll () {
+        const { 0: data, 1: count } = await this._productRepository.findAndCount()
+        if ( !data.length || count == 0 )
+            throw new NotFoundException( `There aren't results for the search` )
+        return { count, data }
+    }
+
+    async findOne ( term: string ) {
+        let product: Product
+
+        if ( isUUID( term ) )
+            product = await this._productRepository.findOneBy( { id: term } )
+
+        if ( !product )
+            product = await this._productRepository.findOneBy( { slug: term } )
+
+        if ( !product )
+            throw new NotFoundException( `There are no results for the search. Search term: ${ term }` )
+
+        return product
+    }
+    ...
+
+    async remove ( id: string ) {
+        const { affected } = await this._productRepository.delete( { id } )
+        if ( affected === 0 )
+            throw new NotFoundException( `There are no results for the search. Search id: ${ id }` )
+        return
+    }
+    ...
+}
+```
+
+Dentro del controlador realizamos los cambios respectivos para usar cada método del servicio, como por ejemplo, recibimos id de tipo string y que sea validado como UUID antes de llegar al método de eliminación:
+
+```ts
+import { ..., ParseUUIDPipe } from '@nestjs/common'
+...
+
+@Controller( 'products' )
+export class ProductsController {
+    ...
+    @Get()
+    findAll () {
+        return this.productsService.findAll()
+    }
+
+    @Get( ':term' )
+    findOne ( @Param( 'term' ) term: string ) {
+        return this.productsService.findOne( term )
+    }
+    ...
+    @Delete( ':id' )
+    remove ( @Param( 'id', ParseUUIDPipe ) id: string ) {
+        return this.productsService.remove( id )
+    }
+}
+```
+
+Respecto al método de eliminación, tenemos otra alternativa para llegar incluso a usar un termino de búsqueda y no solo el id:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async remove ( term: string ) {
+        const product = await this.findOne( term )
+        await this._productRepository.remove( product )
+    }
+    ...
+}
+```
+
+Con el anterior método, debemos actualizar el controlador:
+
+```ts
+@Controller( 'products' )
+export class ProductsController {
+    ...
+    @Delete( ':term' )
+    remove ( @Param( 'term' ) term: string ) {
+        return this.productsService.remove( term )
+    }
+}
+```

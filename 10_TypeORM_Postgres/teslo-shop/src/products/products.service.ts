@@ -1,10 +1,11 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { Product } from './entities/product.entity'
 import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
+import { isUUID } from 'class-validator'
 
 @Injectable()
 export class ProductsService {
@@ -22,20 +23,35 @@ export class ProductsService {
         }
     }
 
-    findAll () {
-        return `This action returns all products`
+    async findAll () {
+        const { 0: data, 1: count } = await this._productRepository.findAndCount()
+        if ( !data.length || count == 0 )
+            throw new NotFoundException( `There aren't results for the search` )
+        return { count, data }
     }
 
-    findOne ( id: number ) {
-        return `This action returns a #${ id } product`
+    async findOne ( term: string ) {
+        let product: Product
+
+        if ( isUUID( term ) )
+            product = await this._productRepository.findOneBy( { id: term } )
+
+        if ( !product )
+            product = await this._productRepository.findOneBy( { slug: term } )
+
+        if ( !product )
+            throw new NotFoundException( `There are no results for the search. Search term: ${ term }` )
+
+        return product
     }
 
     update ( id: number, updateProductDto: UpdateProductDto ) {
         return `This action updates a #${ id } product`
     }
 
-    remove ( id: number ) {
-        return `This action removes a #${ id } product`
+    async remove ( term: string ) {
+        const product = await this.findOne( term )
+        await this._productRepository.remove( product )
     }
 
     private _handleDBException ( error: any ) {
