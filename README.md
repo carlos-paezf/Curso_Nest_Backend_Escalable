@@ -22,12 +22,13 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 
 ## Documentación
 
-- [Sección 02: Breve introducción a TypeScript y conocimientos generales básicos](02-Introduccion_TypeScript/README.md)
-- [Sección 03: Primeros pasos en Nest](03-Primes_pasos_Nest/README.md)
-- [Sección 04: DTOs y Validación de información](04-DTOs_Validacion_informacion/README.md)
-- [Sección 05: Nest CLI Resource - Brands CRUD](05-Nest_CLI_Resource_Brands_CRUD/README.md)
-- [Sección 06: Generar build de producción básico](06-Generar_build_produccion_basico/README.md)
-- [Sección 07: MongoDB Pokedex](07_MongoDB_Pokedex/README.md)
-- [Sección 08: Seed y Paginación](08_Seed_Paginacion/README.md)
-- [Sección 09: Variables de entorno - Deployment y Dockerizar la aplicación](09_Variables_Entorno_Deployment_Dockerizar/README.md)
-- [Sección 10: TypeORM - Postgres](10_TypeORM_Postgres/README.md)
+- [Sección 02: Breve introducción a TypeScript y conocimientos generales básicos](./02-Introduccion_TypeScript/README.md)
+- [Sección 03: Primeros pasos en Nest](./03-Primes_pasos_Nest/README.md)
+- [Sección 04: DTOs y Validación de información](./04-DTOs_Validacion_informacion/README.md)
+- [Sección 05: Nest CLI Resource - Brands CRUD](./05-Nest_CLI_Resource_Brands_CRUD/README.md)
+- [Sección 06: Generar build de producción básico](./06-Generar_build_produccion_basico/README.md)
+- [Sección 07: MongoDB Pokedex](./07_MongoDB_Pokedex/README.md)
+- [Sección 08: Seed y Paginación](./08_Seed_Paginacion/README.md)
+- [Sección 09: Variables de entorno - Deployment y Dockerizar la aplicación](./09_Variables_Entorno_Deployment_Dockerizar/README.md)
+- [Sección 10: TypeORM - Postgres](./10_TypeORM_Postgres/README.md)
+- [Sección 11: Relaciones en TypeORM](./11_Relaciones_TypeORM/README.md)
