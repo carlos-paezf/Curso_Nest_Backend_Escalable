@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common'
 import { PaginationDto } from 'src/commons/dto/pagination.dto'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
@@ -28,8 +28,8 @@ export class ProductsController {
         return this.productsService.update( +id, updateProductDto )
     }
 
-    @Delete( ':term' )
-    remove ( @Param( 'term' ) term: string ) {
-        return this.productsService.remove( term )
+    @Delete( ':id' )
+    remove ( @Param( 'id', ParseUUIDPipe ) id: string ) {
+        return this.productsService.remove( id )
     }
 }

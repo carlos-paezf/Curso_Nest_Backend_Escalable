@@ -816,3 +816,49 @@ export class ProductsService {
     ...
 }
 ```
+
+## Query Builder
+
+En algún punto del desarrollo vamos a necesitar consultar más exigentes a la base de datos, y los métodos que nos ofrece el ORM puede que no sean suficientes. Para este caso podemos usar el método `createQueryBuilder()`. En esta ocasión necesitamos realizar la búsqueda de un producto por su titulo o su slug, entonces creamos la siguiente funcionalidad:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findOne ( term: string ) {
+        let product: Product
+
+        if ( isUUID( term ) )
+            product = await this._productRepository.findOneBy( { id: term } )
+
+        if ( !product )
+            product = await this._productRepository.createQueryBuilder()
+                .where( 'title = :title or slug =:slug', { title: term, slug: term } )
+                .getOne()
+
+        if ( !product )
+            throw new NotFoundException( `There are no results for the search. Search term: ${ term }` )
+
+        return product
+    }
+    ...
+}
+```
+
+Para hacer coincidir el titulo con el termino de búsqueda sin ser Case Sensitive, vamos a usar dos funciones propias de PostgreSQL y tener tanto la columna de titulo como el termino de búsqueda en mayúsculas, además de que el slug que se reciba sea en minúsculas:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findOne ( term: string ) {
+        ...
+        if ( !product )
+            product = await this._productRepository.createQueryBuilder()
+                .where( 'UPPER(title) = UPPER(:title) or slug = LOWER(:slug)', { title: term, slug: term } )
+                .getOne()
+        ...
+    }
+    ...
+}
+```

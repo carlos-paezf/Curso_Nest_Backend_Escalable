@@ -40,7 +40,9 @@ export class ProductsService {
             product = await this._productRepository.findOneBy( { id: term } )
 
         if ( !product )
-            product = await this._productRepository.findOneBy( { slug: term } )
+            product = await this._productRepository.createQueryBuilder()
+                .where( 'UPPER(title) = UPPER(:title) or slug = LOWER(:slug)', { title: term, slug: term } )
+                .getOne()
 
         if ( !product )
             throw new NotFoundException( `There are no results for the search. Search term: ${ term }` )
@@ -52,8 +54,8 @@ export class ProductsService {
         return `This action updates a #${ id } product`
     }
 
-    async remove ( term: string ) {
-        const product = await this.findOne( term )
+    async remove ( id: string ) {
+        const product = await this.findOne( id )
         await this._productRepository.remove( product )
     }
 
