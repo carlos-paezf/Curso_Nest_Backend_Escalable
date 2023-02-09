@@ -944,3 +944,33 @@ export class Product {
 ```
 
 No necesitamos validar si viene o no el slug, por qué ya estamos seguros de que dicha propiedad ya se encuentra o en la instancia que se encuentra en la base de datos, o en el objeto enviado en la petición.
+
+## Nueva columna - Tags
+
+Vamos a añadir una columna a la tabla de productos, teniendo en cuenta que tenemos el modo synchronized activado, por lo que el cambio se verá reflejado de manera inmediata. Ya que tenemos algunos elementos en la base de datos, vamos a definir un valor por default a la propiedad:
+
+```ts
+@Entity()
+export class Product {
+    ...
+    @Column( {
+        type: 'text',
+        array: true,
+        default: []
+    } )
+    tags: string[]
+    ...
+}
+```
+
+Con esta nueva columna debemos realizar el cambio correspondiente en el DTO de creación:
+
+```ts
+export class CreateProductDto {
+    ...
+    @IsOptional()
+    @IsString( { each: true } )
+    @IsArray()
+    tags?: string[]
+}
+```
