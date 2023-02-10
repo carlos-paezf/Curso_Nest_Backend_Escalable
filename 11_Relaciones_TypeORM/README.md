@@ -119,3 +119,102 @@ export class ProductImage {
 ```
 
 Siempre debemos hacernos la pregunta *¿Merece la pena, crear una nueva tabla para relacionarla con una existente?*, y nos respondemos a esa pregunta con esta deducción: Si creamos una nueva columna que puede tener datos nulos, es mejor crear una nueva relación, de lo contrario mantengamos una columna con el arreglo de datos.
+
+## Crear imágenes de producto
+
+Cuando se quiere enviar imágenes a nuestro endpoint de creación o de actualización, obtendremos un error por qué no están definidas dentro de los DTO, y por ello debemos añadir la siguiente configuración dentro del DTO de creación:
+
+```ts
+export class CreateProductDto {
+    ...
+    @IsOptional()
+    @IsString( { each: true } )
+    @IsArray()
+    images?: string[]
+}
+```
+
+Para recibir las imágenes debemos realizar una modificación dentro del servicio del producto y aplicar una corrección en los métodos de creación y actualización:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try {
+            const { images = [], ...productDetails } = createProductDto
+
+            const product = this._productRepository.create( { ...productDetails } )
+            ...
+        } catch ( error ) { ... }
+    }
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const product = await this._productRepository.preload( {
+            id, ...updateProductDto, images: []
+        } )
+        ...
+    }
+    ...
+}
+```
+
+Con lo anterior recibimos la imágenes, pero no las guardamos en la base de datos, ya que no son instancias de la entidad `ProductImage`. Buscando este fin, debemos inyectar un repositorio de la clase mencionada anteriormente:
+
+```ts
+import { Repository } from 'typeorm'
+...
+@Injectable()
+export class ProductsService {
+    ...
+    constructor (
+        ...,
+        @InjectRepository( ProductImage ) private readonly _productImageRepository: Repository<ProductImage>,
+    ) { }
+    ...
+}
+```
+
+Ahora si podemos enviar las instancias de imágenes a la base de datos al momento de crear:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    constructor (
+        @InjectRepository( Product ) private readonly _productRepository: Repository<Product>,
+        @InjectRepository( ProductImage ) private readonly _productImageRepository: Repository<ProductImage>,
+    ) { }
+
+    async create ( createProductDto: CreateProductDto ) {
+        try {
+            const { images = [], ...productDetails } = createProductDto
+
+            const product = this._productRepository.create( {
+                ...productDetails,
+                images: images.map( url => this._productImageRepository.create( { url } ) )
+            } )
+
+            ...
+        } catch ( error ) { ... }
+    }
+    ...
+}
+```
+
+Para evitar que el usuario vea las instancias de las imágenes creadas, retornamos un nuevo objeto con las mismas imágenes que nos envía en el body:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto ) {
+        try {
+            const { images = [], ...productDetails } = createProductDto
+            ...
+            return { ...product, images}
+        } catch ( error ) { ... }
+    }
+    ...
+}
+```

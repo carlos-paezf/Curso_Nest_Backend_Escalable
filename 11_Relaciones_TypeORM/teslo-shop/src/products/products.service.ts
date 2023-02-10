@@ -7,19 +7,28 @@ import { PaginationDto } from '../commons/dto/pagination.dto'
 import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
-import { Product } from './entities/product.entity'
+import { Product, ProductImage } from './entities'
 
 @Injectable()
 export class ProductsService {
     private readonly _logger = new Logger( 'ProductsService' )
 
-    constructor ( @InjectRepository( Product ) private readonly _productRepository: Repository<Product> ) { }
+    constructor (
+        @InjectRepository( Product ) private readonly _productRepository: Repository<Product>,
+        @InjectRepository( ProductImage ) private readonly _productImageRepository: Repository<ProductImage>,
+    ) { }
 
     async create ( createProductDto: CreateProductDto ) {
         try {
-            const product = this._productRepository.create( createProductDto )
+            const { images = [], ...productDetails } = createProductDto
+
+            const product = this._productRepository.create( {
+                ...productDetails,
+                images: images.map( url => this._productImageRepository.create( { url } ) )
+            } )
+
             await this._productRepository.save( product )
-            return product
+            return { ...product, images }
         } catch ( error ) {
             this._handleDBException( error )
         }
@@ -31,7 +40,7 @@ export class ProductsService {
         } )
         if ( !data.length || totalResults == 0 )
             throw new NotFoundException( `There aren't results for the search` )
-        return { limit, offset, partialResults: data.length, totalResults, data }
+        return { offset, limit, partialResults: data.length, totalResults, data }
     }
 
     async findOne ( term: string ) {
@@ -53,7 +62,7 @@ export class ProductsService {
 
     async update ( id: string, updateProductDto: UpdateProductDto ) {
         const product = await this._productRepository.preload( {
-            id, ...updateProductDto
+            id, ...updateProductDto, images: []
         } )
 
         if ( !product )
