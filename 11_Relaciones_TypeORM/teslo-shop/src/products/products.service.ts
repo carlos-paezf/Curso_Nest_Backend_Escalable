@@ -89,10 +89,28 @@ export class ProductsService {
             throw new NotFoundException( `Product with id '${ id }' not found` )
 
         const queryRunner = this._dataSource.createQueryRunner()
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
 
         try {
-            return await this._productRepository.save( product )
+            if ( images ) {
+                await queryRunner.manager.delete( ProductImage, {
+                    product: { id }
+                } )
+
+                product.images = images.map( url => this._productImageRepository.create( { url } ) )
+            }
+
+            await queryRunner.manager.save( product )
+            await queryRunner.commitTransaction()
+            await queryRunner.release()
+
+            return this.findOnePlain( id )
+
         } catch ( error ) {
+            await queryRunner.rollbackTransaction()
+            await queryRunner.release()
+
             this._handleDBException( error )
         }
     }

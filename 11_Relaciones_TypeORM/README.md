@@ -367,3 +367,86 @@ export class ProductsService {
 ```
 
 La idea que tenemos a continuación, es de ejecutar 2 transacciones antes de actualizar el producto. La primera transacción es eliminar las imágenes relacionadas al producto en caso de tener una arreglo vacío o un nuevo arreglo, y la segunda transacción es la inserción de las nuevas imágenes. Si alguna falla tendremos la oportunidad de realizar un RollBack a la base de datos.
+
+## Transacciones
+
+Una transacción es una serie de queries que pueden impactar la base de datos, pero que solo se ejecutan luego de un COMMIT, con el cual nos aseguramos que queremos realizar dicha actividad, y que además libera la conexión del queryRunner a la base de datos.
+
+En el método de actualización, vamos a seguir estos pasos:
+
+1. Desestructurar la información que llega desde el body
+2. Crear una constante con el resultado de precargar toda la información en el repositorio, excepto las imágenes.
+3. Si el producto no existe retornamos un error 404
+4. Creamos un queryRunner, el cual hará uso de la inyección del DataSource de la base de datos.
+5. Conectamos el queryRunner
+6. Iniciamos una transacción
+7. Si la propiedad desestructurada `images` si llego dentro de la petición, realizamos la consulta de eliminación de todas las imágenes asociadas al producto con el id que se recibe en los params de la petición.
+8. Creamos una instancia de `ProductImage` por cada imagen recibida
+9. Guardamos el producto
+10. Realizamos commit de la transacción, si el cual no se podrían llevar a cabo los pasos del 6 al 9.
+11. Liberamos la transacción para no seguir usándola.
+12. Retornamos el producto.
+13. En caso de error, realizamos un rollBack de la transacción para recuperar los valores antes de la misma.
+14. Liberamos la transacción para no seguir usándola.
+15. Manejamos el error.
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const { images, ...toUpdate } = updateProductDto
+
+        const product = await this._productRepository.preload( {
+            id, ...toUpdate
+        } )
+
+        if ( !product )
+            throw new NotFoundException( `Product with id '${ id }' not found` )
+
+        const queryRunner = this._dataSource.createQueryRunner()
+        await queryRunner.connect()
+        await queryRunner.startTransaction()
+
+        try {
+            if ( images ) {
+                await queryRunner.manager.delete( ProductImage, {
+                    product: { id }
+                } )
+
+                product.images = images.map( url => this._productImageRepository.create( { url } ) )
+            }
+
+            await queryRunner.manager.save( product )
+            await queryRunner.commitTransaction()
+            await queryRunner.release()
+
+            return product
+
+        } catch ( error ) {
+            await queryRunner.rollbackTransaction()
+            await queryRunner.release()
+
+            this._handleDBException( error )
+        }
+    }
+    ...
+}
+```
+
+Para cargar las imágenes dentro del producto retornado por el método de actualización, podemos usar el método `findOnePlain` buscando por el id, luego de cerrar la transacción:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        ...
+        try {
+            ...
+            return this.findOnePlain( id )
+        } catch ( error ) { ... }
+    }
+    ...
+}
+```
