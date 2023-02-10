@@ -326,3 +326,44 @@ export class ProductsController {
     ...
 }
 ```
+
+## Query Runner
+
+Cuando queremos actualizar un producto, debemos actualizar la tabla de imágenes en caso de ser necesario. El primer caso es cuando nos envían un arreglo vacío para la propiedad `images`, en cuyo caso debemos eliminar todas las imágenes asociadas al producto, y el segundo caso es cuando recibimos un nuevo arreglo con imágenes que eliminan y reemplazan las que ya se encontraban en la tabla. Debemos aclarar que no debemos hacer nada en caso de que no nos envíen la propiedad `images` dentro de la consulta.
+
+Lo primero que vamos a hacer es inyectar una instancia de `DataSource` con el fin de tener una referencia de nuestra base de datos, y que será usada por un queryRunner dentro el método de actualización. En la función de actualización desestructuramos la información que recibimos, y precargamos toda la información enviada, excepto las imágenes:
+
+```ts
+import { DataSource, ... } from 'typeorm'
+
+@Injectable()
+export class ProductsService {
+    ...
+    constructor (
+        ...,
+        private readonly _dataSource: DataSource
+    ) { }
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const { images, ...toUpdate } = updateProductDto
+
+        const product = await this._productRepository.preload( {
+            id, ...toUpdate
+        } )
+
+        if ( !product )
+            throw new NotFoundException( `Product with id '${ id }' not found` )
+
+        const queryRunner = this._dataSource.createQueryRunner()
+
+        try {
+            return await this._productRepository.save( product )
+        } catch ( error ) {
+            this._handleDBException( error )
+        }
+    }
+    ...
+}
+```
+
+La idea que tenemos a continuación, es de ejecutar 2 transacciones antes de actualizar el producto. La primera transacción es eliminar las imágenes relacionadas al producto en caso de tener una arreglo vacío o un nuevo arreglo, y la segunda transacción es la inserción de las nuevas imágenes. Si alguna falla tendremos la oportunidad de realizar un RollBack a la base de datos.

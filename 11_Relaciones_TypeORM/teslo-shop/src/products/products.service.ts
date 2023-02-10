@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { isUUID } from 'class-validator'
-import { Repository } from 'typeorm'
+import { DataSource, Repository } from 'typeorm'
 
 import { PaginationDto } from '../commons/dto/pagination.dto'
 import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
@@ -16,6 +16,7 @@ export class ProductsService {
     constructor (
         @InjectRepository( Product ) private readonly _productRepository: Repository<Product>,
         @InjectRepository( ProductImage ) private readonly _productImageRepository: Repository<ProductImage>,
+        private readonly _dataSource: DataSource
     ) { }
 
     async create ( createProductDto: CreateProductDto ) {
@@ -78,12 +79,16 @@ export class ProductsService {
     }
 
     async update ( id: string, updateProductDto: UpdateProductDto ) {
+        const { images, ...toUpdate } = updateProductDto
+
         const product = await this._productRepository.preload( {
-            id, ...updateProductDto, images: []
+            id, ...toUpdate
         } )
 
         if ( !product )
             throw new NotFoundException( `Product with id '${ id }' not found` )
+
+        const queryRunner = this._dataSource.createQueryRunner()
 
         try {
             return await this._productRepository.save( product )
