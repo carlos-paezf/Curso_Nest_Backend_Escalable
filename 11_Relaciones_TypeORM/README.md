@@ -564,3 +564,33 @@ export class SeedService {
     }
 }
 ```
+
+## Insertar de forma masiva
+
+Vamos a usar los datos del siguiente [gist](https://gist.githubusercontent.com/Klerith/1fb1b9f758bb0c5b2253dfc94f09e1b6/raw/dc3aad39edbecb502b1ed2ff9e6ad4b584d64cd2/seed.ts) para poblar nuestra base de datos, y almacenaremos la información dentro de `seed/data/seed-data.ts`.
+
+Dentro del servicio del seed haremos la inserción de diversos productos a la base de datos mediante la resolución de un conjunto de promesas:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    private async _insertNewProducts () {
+        await this._productsService.deleteAllProducts()
+
+        const seedProduts = initialData.products
+
+        const insertPromises = []
+
+        seedProduts.forEach( product => {
+            insertPromises.push( this._productsService.create( product ) )
+        } )
+
+        await Promise.all( insertPromises )
+
+        return
+    }
+}
+```
+
+Finalmente podemos usar el endpoint `​http://localhost:3000/api/seed` para ejecutar el seed, borrar los datos anteriores y poblar la base de datos.
