@@ -450,3 +450,43 @@ export class ProductsService {
     ...
 }
 ```
+
+## Eliminación en cascada
+
+Si queremos eliminar un producto que contiene imágenes, tendremos un error por la llave foránea dentro de la tabla de imágenes. Por este motivo debemos afectar a la vez la tabla de imágenes y la tabla de productos.
+
+La solución es ir a la entidad `ProductImage` y definir que al momento de eliminar un producto, afectemos cascada las imágenes relacionadas:
+
+```ts
+@Entity()
+export class ProductImage {
+    ...
+    @ManyToOne(
+        () => Product,
+        product => product.images,
+        { onDelete: 'CASCADE' }
+    )
+    product: Product
+}
+```
+
+Cuando vayamos a crear la semilla que poblará nuestra base de datos, eliminaremos todos los productos existentes y por lo tanto sus imágenes. Con la configuración anterior no tendremos que preocuparnos por errores de llaves foráneas o restricciones en cascada, pero con el siguiente método debemos ser muy cautelosos:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async deleteAllProducts () {
+        const query = this._productRepository.createQueryBuilder( 'product' )
+
+        try {
+            return await query
+                .delete()
+                .where( {} )
+                .execute()
+        } catch ( error ) {
+            this._handleDBException( error )
+        }
+    }
+}
+```
