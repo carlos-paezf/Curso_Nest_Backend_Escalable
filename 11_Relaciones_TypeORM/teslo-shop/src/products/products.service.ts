@@ -36,11 +36,19 @@ export class ProductsService {
 
     async findAll ( { limit = 10, offset = 0 }: PaginationDto ) {
         const { 0: data, 1: totalResults } = await this._productRepository.findAndCount( {
-            take: limit, skip: offset
+            take: limit, skip: offset,
+            relations: {
+                images: true
+            }
         } )
         if ( !data.length || totalResults == 0 )
             throw new NotFoundException( `There aren't results for the search` )
-        return { offset, limit, partialResults: data.length, totalResults, data }
+
+        return {
+            offset, limit,
+            partialResults: data.length, totalResults,
+            data: data.map( ( { images, ...product } ) => ( { ...product, images: images.map( img => img.url ) } ) )
+        }
     }
 
     async findOne ( term: string ) {
@@ -50,14 +58,23 @@ export class ProductsService {
             product = await this._productRepository.findOneBy( { id: term } )
 
         if ( !product )
-            product = await this._productRepository.createQueryBuilder()
+            product = await this._productRepository.createQueryBuilder( 'product' )
                 .where( 'UPPER(title) = UPPER(:title) or slug = LOWER(:slug)', { title: term, slug: term } )
+                .leftJoinAndSelect( 'product.images', 'productImages' )
                 .getOne()
 
         if ( !product )
             throw new NotFoundException( `There are no results for the search. Search term: ${ term }` )
 
         return product
+    }
+
+    async findOnePlain ( term: string ) {
+        const { images = [], ...rest } = await this.findOne( term )
+        return {
+            ...rest,
+            images: images.map( image => image.url )
+        }
     }
 
     async update ( id: string, updateProductDto: UpdateProductDto ) {

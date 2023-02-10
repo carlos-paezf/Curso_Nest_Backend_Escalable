@@ -218,3 +218,111 @@ export class ProductsService {
     ...
 }
 ```
+
+## Aplanar las imágenes
+
+Si consultamos todos los productos, no podremos ver la propiedad de imágenes, y esto se debe a que es una relación, y para poder imprimirla debemos hacer lo siguiente en el servicio:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findAll ( ... ) {
+        const { 0: data, 1: totalResults } = await this._productRepository.findAndCount( {
+            ...,
+            relations: {
+                images: true
+            }
+        } )
+        ...
+    }
+    ...
+}
+```
+
+Con lo anterior traemos toda la información relaciona a la imagen, puesto que estamos aplicando una consulta LEFT JOIN a la base de datos. Si solo queremos un arreglo con las urls de la imágenes, entonces aplicamos la siguiente estrategia:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findAll ( ... ) {
+        ...
+        return {
+            ...,
+            data: data.map( ( { images, ...product } ) => ( { ...product, images: images.map( img => img.url ) } ) )
+        }
+    }
+    ...
+}
+```
+
+Cuando hacemos la consulta de un único producto, volvemos a encontrarnos con el problema de que no contamos con la propiedad en la respuesta, y que en esta ocasión no tenemos la opción de `relations` para hacer la consulta con el método `findOneBy`. Una opción es usar el método `findOne` que si tiene la propiedad `relations`, o usar la función `createQueryBuilder`. Pero en realidad hay una manera más sencilla y usar `Eager relations` el cual funciona con cualquier método `find*`, esta estrategia la configuramos en el la entidad producto, en la propiedad asociada con con la tabla de imágenes:
+
+```ts
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm"
+import { ProductImage } from './product-image.entity'
+
+@Entity()
+export class Product {
+    ...
+    @OneToMany(
+        () => ProductImage,
+        productImage => productImage.product,
+        {
+            cascade: true,
+            eager: true
+        }
+    )
+    images?: ProductImage[]
+    ...
+}
+```
+
+Tenemos el inconveniente de que las relaciones eager no se pueden usar en los Query Builder, en donde tendremos que usar `leftJoinAndSelect` para cargar la relación y definir un alías para la consulta:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findOne ( term: string ) {
+        ...
+        if ( !product )
+            product = await this._productRepository.createQueryBuilder( 'product' )
+                .where( ... )
+                .leftJoinAndSelect( 'product.images', 'productImages' )
+                .getOne()
+        ...
+    }
+    ...
+}
+```
+
+Para aplanar el resultado y no afectar el método `remove`, creamos una función con tal objetivo que será usada dentro del controlador, pero que a su vez sigue usando el método original de `findOne`:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async findOnePlain ( term: string ) {
+        const { images = [], ...rest } = await this.findOne( term )
+        return {
+            ...rest,
+            images: images.map( image => image.url )
+        }
+    }
+    ...
+}
+```
+
+```ts
+@Controller( 'products' )
+export class ProductsController {
+    ...
+    @Get( ':term' )
+    findOne ( @Param( 'term' ) term: string ) {
+        return this.productsService.findOnePlain( term )
+    }
+    ...
+}
+```
