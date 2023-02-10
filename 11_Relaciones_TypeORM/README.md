@@ -490,3 +490,77 @@ export class ProductsService {
     }
 }
 ```
+
+## Product Seed
+
+Vamos a crear un nuevo resource para el seed con el siguiente comando:
+
+```txt
+$: nest g res seed --no-spec
+? What transport layer do you use? REST API
+? Would you like to generate CRUD entry points? No
+```
+
+Dentro del controlador creamos un nuevo método que reciba la petición GET:
+
+```ts
+import { Controller, Get } from '@nestjs/common'
+import { SeedService } from './seed.service'
+
+@Controller( 'seed' )
+export class SeedController {
+    constructor ( private readonly seedService: SeedService ) { }
+
+    @Get()
+    executeSeed () {
+        return this.seedService.runSeed()
+    }
+}
+```
+
+Ahora, debemos exportar el servicio de productos e inyectarlo dentro del servicio de seed:
+
+```ts
+@Module( {
+    ...,
+    exports: [ ProductsService ]
+} )
+export class ProductsModule { }
+```
+
+```ts
+@Module( {
+    imports: [ ProductsModule ],
+    ...
+} )
+export class SeedModule { }
+```
+
+```ts
+import { ProductsService } from 'src/products/products.service'
+
+@Injectable()
+export class SeedService {
+    constructor ( private readonly _productsService: ProductsService ) { }
+    ...
+}
+```
+
+Con el servicio de productos inyectado, procedemos a eliminar todos los registros existentes en la base de datos:
+
+```ts
+@Injectable()
+export class SeedService {
+    constructor ( private readonly _productsService: ProductsService ) { }
+
+    async runSeed () {
+        await this._insertNewProducts()
+        return 'Seed Executed'
+    }
+
+    private async _insertNewProducts () {
+        await this._productsService.deleteAllProducts()
+        return
+    }
+}
+```

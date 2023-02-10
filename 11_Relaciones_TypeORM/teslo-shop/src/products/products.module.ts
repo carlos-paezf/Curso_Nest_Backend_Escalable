@@ -12,6 +12,7 @@ import { ProductsService } from './products.service'
             Product,
             ProductImage
         ] )
-    ]
+    ],
+    exports: [ ProductsService ]
 } )
 export class ProductsModule { }
