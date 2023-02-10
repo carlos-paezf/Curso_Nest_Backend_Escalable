@@ -594,3 +594,19 @@ export class SeedService {
 ```
 
 Finalmente podemos usar el endpoint `​http://localhost:3000/api/seed` para ejecutar el seed, borrar los datos anteriores y poblar la base de datos.
+
+## Renombrar tablas
+
+Podemos renombrar las tablas de nuestra base de datos, desde las entidades del proyecto. Por ejemplo, queremos que nuestras tablas tengan el nombre en plural, por lo tanto hacemos la siguiente modificación:
+
+```ts
+@Entity( { name: 'products' } )
+export class Product { ... }
+```
+
+```ts
+@Entity( { name: 'product_images' } )
+export class ProductImage {...}
+```
+
+Como estamos en desarrollo, podemos eliminar las tablas de la base de datos y levantar nuestro proyecto de nuevo y ejecutar el seed, pero en producción debemos ejecutar una migración.
