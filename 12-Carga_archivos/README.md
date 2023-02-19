@@ -31,3 +31,5 @@ Y levantamos el proyecto con el siguiente comando:
 ```txt
 $: pnpm start:dev
 ```
+
+En caso de no tener registros en la base de datos, vamos a ejecutar el siguiente endpoint: `http://localhost:3000/api/seed`
