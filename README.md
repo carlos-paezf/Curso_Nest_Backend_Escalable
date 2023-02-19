@@ -32,3 +32,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 09: Variables de entorno - Deployment y Dockerizar la aplicación](./09_Variables_Entorno_Deployment_Dockerizar/README.md)
 - [Sección 10: TypeORM - Postgres](./10_TypeORM_Postgres/README.md)
 - [Sección 11: Relaciones en TypeORM](./11_Relaciones_TypeORM/README.md)
+- [Sección 12: Carga de archivos](./12_Carga_archivos/README.md)
