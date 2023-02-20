@@ -157,3 +157,49 @@ export class FilesController {
 Cuando hacemos uso nuevamente del endpoint y enviamos un archivo, tendremos un nuevo elemento dentro del directorio que creamos hace poco, pero es un archivo con un nombre codificado y sin extensión.
 
 Si queremos subir al repositorio el directorio de archivos, pero sin ningún archivo inicialmente, creamos un nuevo archivo llamado `.gitkeep` dentro de la misma carpeta, con el fin de que git le haga seguimiento al mismo.
+
+## Renombrar el archivo subido
+
+Al momento de subir un archivo queremos que contenga un nombre único, pero que conserve su extensión, por tal motivo vamos a usar un nuevo helper en que definimos el nuevo nombre mediante un identificador único generado por el paquete de uuid, el cual instalamos con el siguiente comando:
+
+```txt
+$: pnpm i -S uuid
+$: pnpm i -D @types/uuid
+```
+
+```ts
+import { v4 as uuid } from 'uuid'
+
+
+export const fileNamer = ( req: Express.Request, file: Express.Multer.File, callback: Function ) => {
+    if ( !file ) return callback( new Error( 'File is empty' ), false )
+
+    const fileExtension = file.mimetype
+        .split( '/' )
+        .at( 1 )
+
+    const fileName = `${ uuid() }.${ fileExtension }`
+
+    return callback( null, fileName )
+}
+```
+
+Ahora dentro del controlador llamamos el método para renombrar el archivo en la propiedad storage del interceptor `FileInterceptor`:
+
+```ts
+@Controller( 'files' )
+export class FilesController {
+    ...
+    @Post( 'product' )
+    @UseInterceptors( FileInterceptor( 'file', {
+        fileFilter: fileFilter,
+        storage: diskStorage( {
+            ...,
+            filename: fileNamer
+        } )
+    } ) )
+    uploadProductImage ( @UploadedFile() file: Express.Multer.File, ) { ... }
+}
+```
+
+No importa cuantas veces subamos la misma imagen, el nombre con el que se guardará será siempre diferente
