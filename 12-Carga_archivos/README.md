@@ -130,3 +130,30 @@ export class FilesController {
     }
 }
 ```
+
+## Guardar imagen en filesystem
+
+Esta estrategia vamos a aplicar la estrategia de guardar el archivo en el filesystem, pero es importante resaltar que NO ES la mejor opción, puesto que se pueden subir archivos maliciosos al servidor y hacer vulnerable nuestro proyecto, además de aplicaciones cloud eliminan los archivos que no sean confirmados dentro de un commit, por lo que perderíamos la información de los mismos. Es recomendable realizar la carga en servidores especiales, ya sean propios o de terceros.
+
+Vamos a crear un directorio en la raíz del proyecto con el nombre de `static/uploads`, y luego le definimos al interceptor del método el lugar en donde se deben almacenar los archivos:
+
+```ts
+import { diskStorage } from 'multer'
+...
+@Controller( 'files' )
+export class FilesController {
+    ...
+    @Post( 'product' )
+    @UseInterceptors( FileInterceptor( 'file', {
+        ...,
+        storage: diskStorage( {
+            destination: './static/uploads'
+        } )
+    } ) )
+    uploadProductImage ( @UploadedFile() file: Express.Multer.File, ) { ... }
+}
+```
+
+Cuando hacemos uso nuevamente del endpoint y enviamos un archivo, tendremos un nuevo elemento dentro del directorio que creamos hace poco, pero es un archivo con un nombre codificado y sin extensión.
+
+Si queremos subir al repositorio el directorio de archivos, pero sin ningún archivo inicialmente, creamos un nuevo archivo llamado `.gitkeep` dentro de la misma carpeta, con el fin de que git le haga seguimiento al mismo.
