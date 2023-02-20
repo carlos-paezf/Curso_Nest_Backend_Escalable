@@ -203,3 +203,59 @@ export class FilesController {
 ```
 
 No importa cuantas veces subamos la misma imagen, el nombre con el que se guardará será siempre diferente
+
+## Servir archivos de manera controlada
+
+Vamos a servir al usuario el archivo que nos acaba de subir, y para ello primero creamos un método en el servicio, que nos ayude a servir la ubicación completa del archivo:
+
+```ts
+import { BadRequestException, Injectable } from '@nestjs/common'
+import { existsSync } from 'fs'
+import { join } from 'path'
+
+@Injectable()
+export class FilesService {
+    getStaticProductImage ( imageName: string ) {
+        const path = join( __dirname, '../../static/products', imageName )
+
+        if ( !existsSync( path ) )
+            throw new BadRequestException( `No product found with image ${ imageName }` )
+
+        return path
+    }
+}
+```
+
+Lo siguiente será crear un método con el verbo GET dentro del controlador, para enviar el archivo dentro de la respuesta, pero es necesario usar el decorador `@Res` tipando la propiedad con la interface `Response` de `express`, para poder enviar el archivo. Esto nos trae una desventaja que en el momento no aplica, y es que le quitamos el control de la respuesta a Nest, por lo que cualquier interceptor se ve omitido por el uso del nuevo decorador.
+
+```ts
+import { ..., Res } from '@nestjs/common'
+import { Response } from 'express'
+...
+@Controller( 'files' )
+export class FilesController {
+    ...
+    @Get( 'product/:imageName' )
+    findProductImage ( @Param( 'imageName' ) imageName: string, @Res() res: Response ) {
+        const path = this.filesService.getStaticProductImage( imageName )
+        return res.sendFile( path )
+    }
+}
+```
+
+Ahora, al momento que enviamos una petición get al endpoint `http://localhost:3000/api/files/product/:imageName`, vamos a recibir la imagen que se cargo, y el nombre de la imagen es obtenida por el usuario a través de la respuesta que obtiene al momento de cargarla (en la siguiente lección seremos más específicos):
+
+```ts
+@Controller( 'files' )
+export class FilesController {
+    ...
+    @Post( 'product' )
+    @UseInterceptors( FileInterceptor( 'file', { ... } ) )
+    uploadProductImage ( @UploadedFile() file: Express.Multer.File, ) {
+        ...
+        const secureUrl = `http://localhost:3000/api/files/product/${ file.filename }`
+        return { secureUrl }
+    }
+    ...
+}
+```
