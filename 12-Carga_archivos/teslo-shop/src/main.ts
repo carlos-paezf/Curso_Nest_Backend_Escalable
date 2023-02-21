@@ -19,6 +19,6 @@ async function bootstrap () {
 
     await app.listen( configService.get( 'PORT' ) )
 
-    logger.verbose( `>> Application run in ${ await app.getUrl() }` )
+    logger.log( `>> Application run in ${ await app.getUrl() }` )
 }
 bootstrap()

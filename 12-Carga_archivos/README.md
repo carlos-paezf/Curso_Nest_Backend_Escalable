@@ -367,3 +367,44 @@ UPDATE product_images SET url = 'http://localhost:3000/api/products/' || url
 ```
 
 Aunque es valido, no sería lo mejor, ya que estamos ingresando información repetida que usa espacio dentro de la base de datos. Vamos a ver una mejor solución en la siguiente lección.
+
+## Colocar imágenes en el directorio estático
+
+Vamos a mover las imágenes del directorio `public/assets/products/` a `static/products/`, ya que no las queremos servir de manera estática, sino que usaremos el endpoint de consulta que creamos en la lección [](README.md#servir-archivos-de-manera-controlada).
+
+Ahora, para proveer las imágenes al momento de listar los productos, podemos realizar la siguiente modificación:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    private readonly _urlSegmentImages = `${ this._configService.get( 'HOST_API' ) }/files/product`
+
+    constructor (
+        ...,
+        private readonly _configService: ConfigService
+    ) { }
+    ...
+    async findAll ( { limit = 10, offset = 0 }: PaginationDto ) {
+        ...
+        return {
+            ...,
+            data: data.map( ( { images, ...product } ) => ( {
+                ...product,
+                images: images.map( img => `${ this._urlSegmentImages }/${ img.url }` )
+            } ) )
+        }
+    }
+    ...
+    async findOnePlain ( term: string ) {
+        ...
+        return {
+            ...rest,
+            images: images.map( img => `${ this._urlSegmentImages }/${ img.url }` )
+        }
+    }
+    ...
+}
+```
+
+En este punto, ya podemos deshacer la configuración para servir contenido estático, puesto que controlando el acceso a las imágenes mediante un endpoint, podemos administrar permisos o cualquier configuración pertinente a la configuración.

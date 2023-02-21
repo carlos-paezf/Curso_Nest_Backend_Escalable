@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { isUUID } from 'class-validator'
 import { DataSource, Repository } from 'typeorm'
 
+import { ConfigService } from '@nestjs/config'
 import { PaginationDto } from '../commons/dto/pagination.dto'
 import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
 import { CreateProductDto } from './dto/create-product.dto'
@@ -12,11 +13,13 @@ import { Product, ProductImage } from './entities'
 @Injectable()
 export class ProductsService {
     private readonly _logger = new Logger( 'ProductsService' )
+    private readonly _urlSegmentImages = `${ this._configService.get( 'HOST_API' ) }/files/product`
 
     constructor (
         @InjectRepository( Product ) private readonly _productRepository: Repository<Product>,
         @InjectRepository( ProductImage ) private readonly _productImageRepository: Repository<ProductImage>,
-        private readonly _dataSource: DataSource
+        private readonly _dataSource: DataSource,
+        private readonly _configService: ConfigService
     ) { }
 
     async create ( createProductDto: CreateProductDto ) {
@@ -48,7 +51,10 @@ export class ProductsService {
         return {
             offset, limit,
             partialResults: data.length, totalResults,
-            data: data.map( ( { images, ...product } ) => ( { ...product, images: images.map( img => img.url ) } ) )
+            data: data.map( ( { images, ...product } ) => ( {
+                ...product,
+                images: images.map( img => `${ this._urlSegmentImages }/${ img.url }` )
+            } ) )
         }
     }
 
@@ -74,7 +80,7 @@ export class ProductsService {
         const { images = [], ...rest } = await this.findOne( term )
         return {
             ...rest,
-            images: images.map( image => image.url )
+            images: images.map( img => `${ this._urlSegmentImages }/${ img.url }` )
         }
     }
 
