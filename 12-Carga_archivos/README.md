@@ -327,3 +327,43 @@ async function bootstrap () {
 }
 bootstrap()
 ```
+
+## Otras formas de desplegar archivos
+
+Vamos a crear una nueva carpeta en la raíz del proyecto, con el nombre de `public` y dentro almacenamos imágenes cuyos nombres hacen match con los nombres que tenemos en nuestro seed. Normalmente es preferible que el nombre del directorio de las imágenes o la carpeta contenedora de diversos directorios de archivos, tenga el nombre de `public/assets/` con el objetivo de que no tenga problemas con otros endpoints, ya sea de nuestro backend o nuestro frontend SPA.
+
+Para servir contenido estático en nuestro proyecto, debemos instalar el siguiente paquete:
+
+```txt
+$: pnpm i @nestjs/serve-static
+```
+
+Luego, en el archivo `app.module.ts` llamamos el módulo para servir contenido estático:
+
+```ts
+import { ServeStaticModule } from '@nestjs/serve-static'
+import { join } from 'path'
+...
+@Module( {
+    imports: [
+        ...
+        ServeStaticModule.forRoot( {
+            rootPath: join( __dirname, '..', 'public' )
+        } ),
+        ...
+    ],
+} )
+export class AppModule { }
+```
+
+Ahora, si vamos a un navegador y hacemos uso del endpoint `http://localhost:3000/assets/products/:fileName` (incluyendo la extensión), obtenemos la imagen que tenga el nombre enviado.
+
+Si no vamos a modificar las imágenes, podemos usar esta estrategia como una forma de hacer despliegue de contenido estático a cualquier publico.
+
+Nuestro seed tiene valores dentro de la tabla `product_images`, y debemos actualizar dichos valores para que se puedan usar las imágenes que tenemos dentro de nuestra carpeta `public/assets/products`. Una manera sería usar una sentencia SQL para realizar la actualización de toda la columna:
+
+```sql
+UPDATE product_images SET url = 'http://localhost:3000/api/products/' || url
+```
+
+Aunque es valido, no sería lo mejor, ya que estamos ingresando información repetida que usa espacio dentro de la base de datos. Vamos a ver una mejor solución en la siguiente lección.
