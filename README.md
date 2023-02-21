@@ -33,3 +33,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 10: TypeORM - Postgres](./10-TypeORM_Postgres/README.md)
 - [Sección 11: Relaciones en TypeORM](./11-Relaciones_TypeORM/README.md)
 - [Sección 12: Carga de archivos](./12-Carga_archivos/README.md)
+- [Sección 13: Autenticación de autorización](./13_Autenticacion_de_autorizacion/README.md)
