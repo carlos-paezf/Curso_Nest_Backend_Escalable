@@ -259,3 +259,71 @@ export class FilesController {
     ...
 }
 ```
+
+## Retornar el secureUrl
+
+La manera en que estamos retornando el endpoint para consultar la imagen, es muy volátil, y esto se debe a que en producción no sabremos con certeza el hostname y el port en el que se despliegue la aplicación. La manera en que hacemos que la aplicación sea segura, es mediante las variables de entorno, por lo que definimos una variables para el host y otra para el puerto:
+
+```.env
+PORT = 3000
+HOST_API = "http://localhost:3000/api"
+```
+
+Luego inyectamos el servicio de configuración dentro del controlador para reconocer las variables de entorno:
+
+```ts
+import { ConfigService } from '@nestjs/config'
+...
+@Controller( 'files' )
+export class FilesController {
+    constructor ( ..., private readonly _configService: ConfigService ) { }
+    ...
+}
+```
+
+Es importante hacer la importación del módulo de configuración dentro del módulo de imágenes:
+
+```ts
+import { ConfigModule } from '@nestjs/config'
+...
+@Module( {
+    imports: [ ConfigModule ],
+    ...
+} )
+export class FilesModule { }
+```
+
+Ahora com plena seguridad usamos la variable de entorno con el host:
+
+```ts
+@Controller( 'files' )
+export class FilesController {
+    constructor ( ..., private readonly _configService: ConfigService ) { }
+
+    @Post( 'product' )
+    @UseInterceptors( FileInterceptor( 'file', { ... } ) )
+    uploadProductImage ( @UploadedFile() file: Express.Multer.File, ) {
+        ..
+        const secureUrl = `${ this._configService.get( 'HOST_API' ) }/files/product/${ file.filename }`
+        return { secureUrl }
+    }
+}
+```
+
+Aprovechando la variable del puerto, podemos mejorar el archivo `main.ts` usando un logger:
+
+```ts
+import { Logger, ... } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+
+async function bootstrap () {
+    ...
+    const logger = new Logger( 'Bootstrap' )
+    const configService = new ConfigService()
+    ...
+    await app.listen( configService.get( 'PORT' ) )
+
+    logger.log( `>> Application run in ${ await app.getUrl() }` )
+}
+bootstrap()
+```
