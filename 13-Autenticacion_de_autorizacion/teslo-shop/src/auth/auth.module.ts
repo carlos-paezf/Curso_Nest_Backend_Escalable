@@ -8,7 +8,7 @@ import { User } from './entities/user.entity'
     imports: [
         TypeOrmModule.forFeature( [
             User
-        ] ),
+        ] )
     ],
     controllers: [ AuthController ],
     providers: [ AuthService ],

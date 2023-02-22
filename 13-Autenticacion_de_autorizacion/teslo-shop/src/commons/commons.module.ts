@@ -1,4 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Module } from '@nestjs/common'
+import { DBExceptionService } from './services/db-exception.service'
 
-@Module({})
-export class CommonsModule {}
+@Module( {
+    providers: [ DBExceptionService ],
+    exports: [ DBExceptionService ]
+} )
+export class CommonsModule { }

@@ -9,6 +9,7 @@ import { PostgreSQLErrorCodes } from '../commons/enums/db-error-codes.enum'
 import { CreateProductDto } from './dto/create-product.dto'
 import { UpdateProductDto } from './dto/update-product.dto'
 import { Product, ProductImage } from './entities'
+import { DBExceptionService } from 'src/commons/services/db-exception.service'
 
 @Injectable()
 export class ProductsService {
@@ -34,7 +35,7 @@ export class ProductsService {
             await this._productRepository.save( product )
             return { ...product, images }
         } catch ( error ) {
-            this._handleDBException( error )
+            DBExceptionService.handleDBException( error )
         }
     }
 
@@ -117,25 +118,13 @@ export class ProductsService {
             await queryRunner.rollbackTransaction()
             await queryRunner.release()
 
-            this._handleDBException( error )
+            DBExceptionService.handleDBException( error )
         }
     }
 
     async remove ( id: string ) {
         const product = await this.findOne( id )
         await this._productRepository.remove( product )
-    }
-
-    private _handleDBException ( error: any ) {
-        if ( error.code === PostgreSQLErrorCodes.NOT_NULL_VIOLATION )
-            throw new BadRequestException( error.detail )
-
-        if ( error.code === PostgreSQLErrorCodes.UNIQUE_VIOLATION )
-            throw new BadRequestException( error.detail )
-
-        this._logger.error( error )
-        console.error( error )
-        throw new InternalServerErrorException( "Unexpected error, check server logs" )
     }
 
     async deleteAllProducts () {
@@ -147,7 +136,7 @@ export class ProductsService {
                 .where( {} )
                 .execute()
         } catch ( error ) {
-            this._handleDBException( error )
+            DBExceptionService.handleDBException( error )
         }
     }
 }
