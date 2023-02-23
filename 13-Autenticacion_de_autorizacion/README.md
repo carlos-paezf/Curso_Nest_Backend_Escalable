@@ -237,3 +237,51 @@ export class AuthService {
     }
 }
 ```
+
+## Encriptar la contraseña
+
+Debemos evitar que la contraseña sea retornada en las consultas, y además deben estar encriptadas dentro de la base de datos, usando hash de 1 sola vía para evitar su revelación forzada. Usaremos el paquete `bcrypt` ejecutando los siguiente comandos:
+
+```txt
+$: pnpm i -S bcrypt
+$: pnpm i -D @types/bcrypt
+```
+
+Dentro del servicio llamamos el paquete y usamos el método `hashSync` para encriptar la contraseña al momento de guardar el registro:
+
+```ts
+import * as bcrypt from 'bcrypt'
+...
+@Injectable()
+export class AuthService {
+    ...
+    async create ( createUserDto: CreateUserDTO ) {
+        try {
+            const { password, ...userData } = createUserDto
+            const user = this._userRepository.create( {
+                ...userData,
+                password: bcrypt.hashSync( password, 10 )
+            } )
+            await this._userRepository.save( user )
+            return user
+        } catch ( error ) { ... }
+    }
+}
+```
+
+De esta manera cada que se registre un nuevo usuario, se va a encriptar la contraseña dentro de la base de datos, pero el problema es que se está retornando el hash dentro de la respuesta. Una manera sencilla es usando `delete` sobre el objeto que se va retornar, luego aplicaremos una mejor estrategia:
+
+```ts
+@Injectable()
+export class AuthService {
+    ...
+    async create ( createUserDto: CreateUserDTO ) {
+        try {
+            ...
+            await this._userRepository.save( user )
+            delete user.password
+            return user
+        } catch ( error ) { ... }
+    }
+}
+```
