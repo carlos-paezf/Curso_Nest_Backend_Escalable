@@ -360,3 +360,42 @@ export class AuthService {
     }
 }
 ```
+
+## Nest Authentication Passport
+
+Vamos a usar la estrategia de autenticación que nos provee Nest, por lo que haremos una instalación del paquete `passport` y su adaptador en nest, con el siguiente comando:
+
+```txt
+$: pnpm i @nestjs/passport passport
+```
+
+Cómo también usaremos JWT necesitamos otra instalación:
+
+```txt
+$: pnpm i -S @nestjs/jwt passport-jwt
+$: pnpm i -D @types/passport-jwt
+```
+
+Dentro del decorador de definición del módulo de autenticación, realizamos un registro de la estrategia `jwt` para el passport, y configuramos algunas parte del token que se genere:
+
+```ts
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+...
+@Module( {
+    imports: [
+        ...,
+        PassportModule.register( { defaultStrategy: 'jwt' } ),
+        JwtModule.register( {
+            secret: process.env.JWT_SECRET,
+            signOptions: {
+                expiresIn: '2h'
+            }
+        } )
+    ],
+    ...
+} )
+export class AuthModule { }
+```
+
+El inconveniente que se puede presentar, es que las variables de entorno aún no hayan sido reconocidas al momento de levanter el proyecto, y por lo tanto nuestro registro del módulo JWT sea fallido. En este caso tenemos la opción de hacer el registro asíncrono.
