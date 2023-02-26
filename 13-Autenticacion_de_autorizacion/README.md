@@ -285,3 +285,78 @@ export class AuthService {
     }
 }
 ```
+
+## Login de usuario
+
+Es momento de redactar el método del login. Iniciamos definiendo el DTO para el body de la petición (Importante, no lo extendemos como tipo parcial del DTO de registro, por que queremos que todas las propiedades sean requeridas):
+
+```ts
+import { IsEmail, IsString, MinLength, MaxLength, Matches } from 'class-validator'
+
+export class LoginUserDTO {
+    @IsString()
+    @IsEmail()
+    email!: string
+
+    @IsString()
+    @MinLength( 6 )
+    @MaxLength( 50 )
+    @Matches(
+        /(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+        message: 'The password must have a Uppercase, lowercase letter and a number'
+    } )
+    password!: string
+}
+```
+
+Seguimos con la creación del punto de entrada en el controlador:
+
+```ts
+import { LoginUserDTO } from './dto/login-user.dto'
+...
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Post( 'login' )
+    login ( @Body() loginUserDto: LoginUserDTO ) {
+        return this.authService.login( loginUserDto )
+    }
+}
+```
+
+En este punto es importante que tengamos en cuenta el no mostrar la contraseña en cualquier consulta hacía la tabla de usuarios, por lo que para evitar esta falla de seguridad, la vamos a excluir dentro de la configuración de la entidad:
+
+```ts
+@Entity( 'users' )
+export class User {
+    ...
+    @Column( {
+        type: 'text',
+        select: false
+    } )
+    password: string;
+    ...
+}
+```
+
+Ahora, definimos el servicio, en donde desestructuramos la información que recibe, para luego buscar el usuario mediante su email, pero en este caso si necesitamos el password para hacer la comparación entre la que se ingresa y la existente en el registro. En caso de que no se encuentre el usuario retornamos un status 401, pero si todo sale bien, retornamos el usuario por ahora:
+
+```ts
+@Injectable()
+export class AuthService {
+    ...
+    async login ( loginUserDto: LoginUserDTO ) {
+        const { email, password } = loginUserDto;
+
+        const user = await this._userRepository.findOne( {
+            where: { email },
+            select: { email: true, password: true }
+        } );
+
+        if ( !user || !bcrypt.compareSync( password, user.password ) )
+            throw new UnauthorizedException( 'Invalid credentials' );
+
+        return user;
+    }
+}
+```
