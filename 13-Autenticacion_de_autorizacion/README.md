@@ -425,3 +425,23 @@ Cuando registramos un módulo de manera asíncrona tenemos la oportunidad de hac
 } )
 export class AuthModule { }
 ```
+
+## JwtStrategy
+
+Cuando recibamos el JWT, debemos identificar el usuario al cual le pertenece. Un JWT consta de un header que define el algoritmo y el tipo de token, el objeto payload que contiene la data principal que guardamos dentro del token, y un verify signature en donde se valida la firma y validez del token.
+
+Vamos a crear un nuevo archivo llamado `auth/strategies/jwt.strategy.ts`, y dentro de este archivo creamos una clase que extiende de `PassportStrategy`. En esta clase creamos un método para validar el payload del JWT, y que retornará un usuario una vez aplicada la validación.
+
+```ts
+import { PassportStrategy } from "@nestjs/passport";
+import { Strategy } from "passport-jwt";
+import { User } from "../entities/user.entity";
+import { IJwtPayload } from "../interfaces/jwt-payload.interface";
+
+export class JwtStrategy extends PassportStrategy( Strategy ) {
+    async validate ( payload: IJwtPayload ): Promise<User> {
+        const { email } = payload;
+        return;
+    }
+}
+```
