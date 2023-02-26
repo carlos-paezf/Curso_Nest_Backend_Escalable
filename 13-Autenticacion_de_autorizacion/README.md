@@ -399,3 +399,29 @@ export class AuthModule { }
 ```
 
 El inconveniente que se puede presentar, es que las variables de entorno aún no hayan sido reconocidas al momento de levanter el proyecto, y por lo tanto nuestro registro del módulo JWT sea fallido. En este caso tenemos la opción de hacer el registro asíncrono.
+
+## Módulos Asíncronos
+
+Cuando registramos un módulo de manera asíncrona tenemos la oportunidad de hacer inyecciones dentro del mismo, algo muy útil para nosotros, ya que reemplazaremos el uso de `process.env` por una instancia de `ConfigService`. Mediante la propiedad `useFactory` creamos una función anónima para establecer la configuración que teníamos anteriormente:
+
+```ts
+@Module( {
+    imports: [
+        ...,
+        JwtModule.registerAsync( {
+            imports: [ ConfigModule ],
+            inject: [ ConfigService ],
+            useFactory: ( configService: ConfigService ) => {
+                return {
+                    secret: configService.get( 'JWT_SECRET' ),
+                    signOptions: {
+                        expiresIn: '2h'
+                    }
+                };
+            },
+        } )
+    ],
+    ...
+} )
+export class AuthModule { }
+```
