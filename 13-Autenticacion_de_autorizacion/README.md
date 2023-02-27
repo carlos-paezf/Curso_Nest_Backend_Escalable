@@ -476,7 +476,7 @@ export class JwtStrategy extends PassportStrategy( Strategy ) {
 
         if ( !user ) throw new UnauthorizedException( 'Token not valid' );
 
-        if ( user.isActive ) throw new UnauthorizedException( 'User is inactive, talk with an admin' );
+        if ( !user.isActive ) throw new UnauthorizedException( 'User is inactive, talk with an admin' );
 
         return user;
     }
@@ -558,3 +558,27 @@ export class User {
     }
 }
 ```
+
+## Private Route - General
+
+Mediante los Guards logramos permitir o prevenir el acceso a una ruta, aquí es donde se debe autorizar una solicitud. Para usar un guard usamos el decorador `@UseGuards()`, ya sea a nivel de método, controlador o módulo, pero en este caso lo haremos a nivel del endpoint, y usamos el Guard de autenticación definido por el propio paquete de `@nest/passport`:
+
+```ts
+import { ..., UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+...
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing' )
+    @UseGuards( AuthGuard() )
+    testingPrivateRoute () {
+        return {
+            ok: true,
+            message: 'Ruta privada'
+        };
+    }
+}
+```
+
+Cuando hacemos la request, debemos añadir dentro de los headers la propiedad `Authorization` con el valor de `Bearer <token>`, para que nuestro servidor de acceso a la función del endpoint, por que de caso contrario tendremos un error 401. Este Guard hace uso de manera implícita de la función de validación que definimos en la estrategia.

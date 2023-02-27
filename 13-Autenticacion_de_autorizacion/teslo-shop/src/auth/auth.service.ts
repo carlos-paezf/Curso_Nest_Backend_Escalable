@@ -43,8 +43,8 @@ export class AuthService {
         const { email, password } = loginUserDto;
 
         const user = await this._userRepository.findOne( {
-            where: { email },
-            select: { email: true, password: true }
+            where: { email, },
+            select: { id: true, email: true, password: true }
         } );
 
         if ( !user || !bcrypt.compareSync( password, user.password ) )
