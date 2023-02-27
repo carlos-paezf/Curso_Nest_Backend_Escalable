@@ -31,7 +31,7 @@ export class AuthService {
             delete user.password;
 
             return {
-                token: this._getJwtToken( { email: user.email, sub: user.id } ),
+                token: this._getJwtToken( { id: user.id } ),
                 user
             };
         } catch ( error ) {
@@ -51,7 +51,7 @@ export class AuthService {
             throw new UnauthorizedException( 'Invalid credentials' );
 
         return {
-            token: this._getJwtToken( { email: user.email, sub: user.id } ),
+            token: this._getJwtToken( { id: user.id } ),
             user
         };
     }

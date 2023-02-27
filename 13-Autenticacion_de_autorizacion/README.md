@@ -582,3 +582,60 @@ export class AuthController {
 ```
 
 Cuando hacemos la request, debemos añadir dentro de los headers la propiedad `Authorization` con el valor de `Bearer <token>`, para que nuestro servidor de acceso a la función del endpoint, por que de caso contrario tendremos un error 401. Este Guard hace uso de manera implícita de la función de validación que definimos en la estrategia.
+
+## Cambiar email por id en el Payload
+
+Hay un pequeño problema con el payload del token, puesto que estamos usando el email que contiene para realizar la consulta dentro de la base de datos y validar el token, pero cuando cambiamos el correo electrónico, nuestro token será invalido. Para controlar esto debemos actualizar la interfaz del payload:
+
+```ts
+export interface IJwtPayload {
+    id: string;
+}
+```
+
+Luego actualizamos el método de validación para extraer el id en reemplazo del email:
+
+```ts
+@Injectable()
+export class JwtStrategy extends PassportStrategy( Strategy ) {
+    ...
+    async validate ( payload: IJwtPayload ): Promise<User> {
+        const { id } = payload;
+        const user = await this._userRepository.findOneBy( { id } );
+        ...
+    }
+}
+```
+
+Por último, vamos a los métodos de registro y login en el servicio, para actualizar la información que guarda el payload, pero en el caso del login, necesitamos añadir la propiedad `id` dentro de la consulta `select`:
+
+```ts
+
+@Injectable()
+export class AuthService {
+    ...
+    async create ( createUserDto: CreateUserDTO ) {
+        try {
+            ...
+            return {
+                token: this._getJwtToken( { id: user.id } ),
+                user
+            };
+        } catch ( error ) { ... }
+    }
+
+    async login ( loginUserDto: LoginUserDTO ) {
+        ...
+        const user = await this._userRepository.findOne( {
+            where: { email, },
+            select: { id: true, email: true, password: true }
+        } );
+        ...
+        return {
+            token: this._getJwtToken( { id: user.id } ),
+            user
+        };
+    }
+    ...
+}
+```
