@@ -445,3 +445,62 @@ export class JwtStrategy extends PassportStrategy( Strategy ) {
     }
 }
 ```
+
+## JwtStrategy - Parte 2
+
+Vamos a validar que el contenido del payload contenga un email valido, por lo que necesitamos buscar el usuario y para ello inyectamos el servicio de usuarios, lo cual nos obliga a traer las propiedades de la clase padre, por lo que vamos a aprovechar y definir algunas propiedades más, tales como la llave secreta y que el token sea de tipo Bearer Token. En caso de que no se encuentre el usuario por su email, o que se encuentre inactivo, retornamos un status 401:
+
+```ts
+import { ExtractJwt, ... } from "passport-jwt";
+import { User } from "../entities/user.entity";
+import { Repository } from 'typeorm';
+import { InjectRepository } from "@nestjs/typeorm";
+import { ConfigService } from '@nestjs/config';
+...
+
+export class JwtStrategy extends PassportStrategy( Strategy ) {
+    constructor (
+        @InjectRepository( User ) private readonly _userRepository: Repository<User>,
+        _configService: ConfigService
+    ) {
+        super( {
+            secretOrKey: _configService.get( 'JWT_SECRET' ),
+            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+        } );
+    }
+
+    async validate ( payload: IJwtPayload ): Promise<User> {
+        const { email } = payload;
+
+        const user = await this._userRepository.findOneBy( { email } );
+
+        if ( !user ) throw new UnauthorizedException( 'Token not valid' );
+
+        if ( user.isActive ) throw new UnauthorizedException( 'User is inactive, talk with an admin' );
+
+        return user;
+    }
+}
+```
+
+Con el anterior método logramos que la información del usuario ya se encuentre disponible en la Request, y que posteriormente podamos acceder a la misma mediante interceptors y decoradores. Ahora, debemos definir que nuestra clase sea un provider mediante el decorador `@Injectable()`:
+
+```ts
+import { Injectable, ... } from '@nestjs/common';
+...
+@Injectable()
+export class JwtStrategy extends PassportStrategy( Strategy ) {...}
+```
+
+Luego lo proveemos dentro del módulo de autenticación, y también lo exportaremos por qué puede que se necesite en cualquier otro lugar para validar el token, pero también vamos a exportar la configuración del módulo de passport y JWT:
+
+```ts
+import { JwtStrategy } from './strategies/jwt.strategy';
+...
+@Module( {
+    ...,
+    providers: [ ..., JwtStrategy ],
+    exports: [ ..., JwtStrategy, PassportModule, JwtModule ]
+} )
+export class AuthModule { }
+```
