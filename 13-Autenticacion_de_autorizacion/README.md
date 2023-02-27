@@ -504,3 +504,57 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 } )
 export class AuthModule { }
 ```
+
+## Generar un JWT
+
+Hay 2 lugares donde debemos retornar el JWT, al momento del registro y al momento del login, por lo que vamos a crear un método privado dentro del servicio de autenticación, el cual usará una inyección del `JwtService` que ya tenemos gracias a la importación del `JwtModule`:
+
+```ts
+import { JwtService } from '@nestjs/jwt';
+...
+
+@Injectable()
+export class AuthService {
+    constructor (
+        ..., private readonly _jwtService: JwtService
+    ) { }
+
+    async create ( createUserDto: CreateUserDTO ) {
+        try {
+            ...
+            return {
+                token: this._getJwtToken( { email: user.email } ),
+                user
+            };
+        } catch ( error ) { ... }
+    }
+
+    async login ( loginUserDto: LoginUserDTO ) {
+        ...
+        return {
+            token: this._getJwtToken( { email: user.email } ),
+            user
+        };
+    }
+
+    private _getJwtToken ( payload: IJwtPayload ) {
+        return this._jwtService.sign( payload );
+    }
+}
+```
+
+Antes de avanzar, vamos a realizar una modificación al campo de correo, puesto que queremos que siempre se guarde en minúsculas:
+
+```ts
+import { BeforeInsert, BeforeUpdate, ... } from 'typeorm';
+
+@Entity( 'users' )
+export class User {
+    ...
+    @BeforeInsert()
+    @BeforeUpdate()
+    checkFieldsBeforeInsertOrUpdate () {
+        this.email = this.email.toLowerCase().trim();
+    }
+}
+```
