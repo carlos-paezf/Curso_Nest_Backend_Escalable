@@ -1,0 +1,28 @@
+@base_url = http://localhost:3000/api/auth
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkxYWRhNzgwLTc0M2MtNGZiOC1iODU3LTY4MTQwNGIyNGQwMSIsImlhdCI6MTY4MDA1NDM2NSwiZXhwIjoxNjgwMDYxNTY1fQ.iXFDQiGwLa6ziBwIMgk2TocgTSV4ct6B-id_Dugg72w
+
+################################################################
+
+POST {{base_url}}/register
+Content-Type: application/json
+
+{
+    "email": "test@user.com",
+    "password": "Test-user0",
+    "fullName": "Test User"
+}
+
+################################################################
+
+POST {{base_url}}/login
+Content-Type: application/json
+
+{
+    "email": "test@user.com",
+    "password": "Test-user0"
+}
+
+################################################################
+
+GET {{base_url}}/private-testing
+Authorization: Bearer {{token}}

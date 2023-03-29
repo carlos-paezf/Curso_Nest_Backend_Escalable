@@ -1,4 +1,8 @@
-POST http://localhost:3000/api/products
+@base_url = http://localhost:3000/api/products
+
+################################################################
+
+POST {{base_url}}
 Content-Type: application/json
 
 {
@@ -11,31 +15,31 @@ Content-Type: application/json
 
 ################################################################
 
-GET http://localhost:3000/api/products
+GET {{base_url}}
 
 ################################################################
 
-GET http://localhost:3000/api/products?offset=0&limit=5
+GET {{base_url}}?offset=0&limit=5
 
 ################################################################
 
-GET http://localhost:3000/api/products?offset=0&limit=10
+GET {{base_url}}?offset=0&limit=10
 
 ################################################################
 
-GET http://localhost:3000/api/products/9921f67a-0c19-41bd-a1f1-1405f5b79cd7
+GET {{base_url}}/9921f67a-0c19-41bd-a1f1-1405f5b79cd7
 
 ################################################################
 
-GET http://localhost:3000/api/products/new_product
+GET {{base_url}}/new_product
 
 ################################################################
 
-GET http://localhost:3000/api/products/New%20Product
+GET {{base_url}}/New%20Product
 
 ################################################################
 
-PATCH http://localhost:3000/api/products/9921f67a-0c19-41bd-a1f1-1405f5b79cd7
+PATCH {{base_url}}/9921f67a-0c19-41bd-a1f1-1405f5b79cd7
 Content-Type: application/json
 
 {

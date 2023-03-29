@@ -639,3 +639,55 @@ export class AuthService {
     ...
 }
 ```
+
+## Custom Property Decorator - GetUser
+
+Vamos a obtener el usuario de las rutas en las que está autenticado. En este caso necesitamos un decorador a nivel de propiedad, el cual no es provisto por el CLI de Nest. Una posible solución para obtener el usuario sería usar el decorador `@Req()` para obtener todo el objeto de la petición, y luego extraer el usuario:
+
+```ts
+import { ..., Req } from '@nestjs/common';
+...
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing' )
+    @UseGuards( AuthGuard() )
+    testingPrivateRoute ( @Req() request: Express.Request ) {
+        console.log( { user: request.user } );
+        ...
+    }
+}
+```
+
+Ahora bien, si la petición no pasa por el `AuthGuard()`, la petición no tendrá la instancia del usuario y por lo tanto si llegamos a usar la propiedad `user` obtendremos un error. Con esto en mente, creamos un decorador personalizado dentro de `auth/decorators/get-user.decorator.ts`. En este decorador decorador recibimos la data que se se enviará al momento de usar el decorador, y el contexto bajo el cual se está ejecutando. Aprovechando el contexto, obtenemos la request y posteriormente el usuario, el cual si no existe en la data, será un error del lado del backend por qué estamos solicitando dicha propiedad, pero no la hemos guardado mediante el decorador de autenticación. Finalmente el decorador retorna el usuario:
+
+```ts
+import { ExecutionContext, InternalServerErrorException, createParamDecorator } from "@nestjs/common";
+
+export const GetUser = createParamDecorator( ( data, ctx: ExecutionContext ) => {
+    const request = ctx.switchToHttp().getRequest();
+    const user = request.user;
+
+    if ( !user ) throw new InternalServerErrorException( 'User not found in request' );
+
+    return user;
+} );
+```
+
+Para usar el custom property decorator, vamos al controlador y añadimos lo siguiente dentro de los parámetros de la función:
+
+```ts
+import { GetUser } from './decorators/get-user.decorator';
+...
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    testingPrivateRoute ( @GetUser() user: User ) {
+        return {
+            ok: true,
+            message: 'Ruta privada',
+            user
+        };
+    }
+}
+```
