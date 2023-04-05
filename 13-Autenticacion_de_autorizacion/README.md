@@ -691,3 +691,91 @@ export class AuthController {
     }
 }
 ```
+
+## Tarea: Custom Decorators
+
+Para esta lección vamos a actualizar el decorador `@GetUser()` con el objetivo de que si recibe un string dentro de los parámetros, entonces, retorne el valor de la propiedad que tenga dicho nombre, pero en caso contrario, retorne todo el objeto del usuario.
+
+Por ejemplo, si llamamos el decorador de la siguiente manera `GetUser() user: User`, obtendremos todo el objeto del usuario que se encuentra en la request, pero si se usa de la siguiente manera `GetUser( 'email' ) email: string`, obtendríamos el valor del correo que le pertenece al usuario.
+
+Para lograr lo anterior modificamos el decorador añadiendo una validación para el caso en el que tenga data al momento de ser llamado.
+
+```ts
+import { ExecutionContext, InternalServerErrorException, createParamDecorator } from "@nestjs/common";
+
+export const GetUser = createParamDecorator( ( data: string, ctx: ExecutionContext ) => {
+    const request = ctx.switchToHttp().getRequest();
+    const user = request.user;
+
+    if ( !user ) throw new InternalServerErrorException( 'User not found in request' );
+
+    return ( !data ) ? user : user[ data ];
+} );
+```
+
+Ahora podemos llamarlo en el controlador de la siguiente manera:
+
+```ts
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    testingPrivateRoute ( @GetUser() user: User, @GetUser( 'email' ) email: string ) {
+        return {
+            ...,
+            user,
+            email
+        };
+    }
+}
+```
+
+Como segunda tarea vamos a crear un custom decorators que se encargue de extraer y retornar los `rawHeaders` de la petición que se está realizando.
+
+Lo primero que haremos es crear el archivo decorador dentro de `auth/decorators/` y lo llamaremos `raw-headers.decorator.ts`. Dentro del archivo añadimos el siguiente código:
+
+```ts
+import { ExecutionContext, InternalServerErrorException, createParamDecorator } from "@nestjs/common";
+
+export const RawHeaders = createParamDecorator( ( data, ctx: ExecutionContext ) => {
+    const request = ctx.switchToHttp().getRequest();
+    const rawHeaders = request.rawHeaders;
+
+    if ( !rawHeaders ) throw new InternalServerErrorException( 'Raw Headers not found in the request' );
+
+    return rawHeaders;
+} );
+```
+
+En el controlador llamamos el decorador de la siguiente manera para obtener un arreglo de strings con los headers en formato raw:
+
+```ts
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    testingPrivateRoute ( @RawHeaders() rawHeaders: string[], ... ) {
+        return {
+            ...,
+            rawHeaders
+        };
+    }
+}
+```
+
+Aunque lo anterior sea muy útil para practicar la creación de custom decorators, ya contamos con decorator en Nest para extraer los headers de la petición en formato de objeto, y se usa de la siguiente manera:
+
+```ts
+import { ..., Headers  } from '@nestjs/common';
+import { IncomingHttpHeaders } from 'http2';
+...
+
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    testingPrivateRoute ( @Headers() headers: IncomingHttpHeaders, ... ) {
+        return {
+            ...,
+            headers
+        };
+    }
+}
+```

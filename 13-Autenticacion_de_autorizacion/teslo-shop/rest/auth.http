@@ -1,5 +1,5 @@
 @base_url = http://localhost:3000/api/auth
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkxYWRhNzgwLTc0M2MtNGZiOC1iODU3LTY4MTQwNGIyNGQwMSIsImlhdCI6MTY4MDA1NDM2NSwiZXhwIjoxNjgwMDYxNTY1fQ.iXFDQiGwLa6ziBwIMgk2TocgTSV4ct6B-id_Dugg72w
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkxYWRhNzgwLTc0M2MtNGZiOC1iODU3LTY4MTQwNGIyNGQwMSIsImlhdCI6MTY4MDY2MDA1OCwiZXhwIjoxNjgwNjY3MjU4fQ.V7IotdrGVZ_BeZlfBFBxlwfkDjYSJO-fWXbDQEsA3P4
 
 ################################################################
 

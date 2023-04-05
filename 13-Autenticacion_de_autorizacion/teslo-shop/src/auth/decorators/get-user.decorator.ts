@@ -6,5 +6,5 @@ export const GetUser = createParamDecorator( ( data, ctx: ExecutionContext ) => 
 
     if ( !user ) throw new InternalServerErrorException( 'User not found in request' );
 
-    return user;
+    return ( !data ) ? user : user[ data ];
 } );
