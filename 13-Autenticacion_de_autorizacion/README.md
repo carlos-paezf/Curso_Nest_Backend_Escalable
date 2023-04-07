@@ -779,3 +779,80 @@ export class AuthController {
     }
 }
 ```
+
+## Custom Guard
+
+Vamos a crear un nuevo método GET dentro de la autenticación (luego lo eliminaremos, ya que solo es para fines prácticos). Lo siguiente será crear un custom guard que nos ayude a validar si el usuario cuenta con un rol permitido para ejecutar el endpoint, dicho elemento lo podemos crear con el siguiente comando:
+
+```txt
+$: nest g gu auth/guards/user-role --no-spec --flat
+```
+
+Tendremos como base el siguiente código generado por el CLI de Nest:
+
+```ts
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    canActivate (
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        return true;
+    }
+}
+```
+
+La manera de usar el guard dentro del nuevo endpoint es la siguiente:
+
+```ts
+import { AuthGuard } from '@nestjs/passport';
+import { UserRoleGuard } from './guards/user-role.guard';
+
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing-2' )
+    @UseGuards( AuthGuard(), UserRoleGuard )
+    privateRoute2 ( ... ) { ... }
+}
+```
+
+Debemos aclarar que `AuthGuard()` es una función que regresa un tipo, mientras que `UserRoleGuard` es una clase por lo que no debemos crear una instancia nueva y más bien usamos un especie de singleton. Los Guards se encuentran dentro de la exception zone del ciclo de ejecución de Nest, por lo que puede lanzar excepciones en la respuesta.
+
+En nuestro caso necesitamos validar que el usuario tenga ciertos roles, los cuales deben ser definidos en la metadata del método:
+
+```ts
+import { ..., SetMetadata } from '@nestjs/common';
+...
+
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing-2' )
+    @SetMetadata( 'roles', [ 'user', 'admin' ] )
+    @UseGuards( AuthGuard(), UserRoleGuard )
+    privateRoute2 ( ... ) { ... }
+}
+```
+
+Ahora, dentro del guard leemos dicha metadata para controlar el paso a la ejecución del endpoint, para lo cual usamos una instancia de `Reflector`, con el cual podemos extraer la información almacenada dentro de la metadata de la petición.:
+
+```ts
+import { Reflector } from '@nestjs/core';
+...
+
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    constructor ( private readonly _reflector: Reflector ) { }
+
+    canActivate (
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        const validRoles: string[] = this._reflector.get( 'roles', context.getHandler() );
+
+        return true;
+    }
+}
+```
