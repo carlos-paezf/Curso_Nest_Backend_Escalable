@@ -974,3 +974,41 @@ export class AuthController {
     privateRoute2 ( @GetUser() user: User ) { ... }
 }
 ```
+
+## Composición de Decoradores
+
+En estos momentos estamos usando varios decoradores dentro de un único método, y con estos estamos haciendo los procesos de autenticación (`AuthGuard`) y autorización (`UserRoleGuard`). La intención de la composición de decoradores, es poder centralizar todo el proceso de varios decoradores en solo un decorador.
+
+Para esta lección vamos a crear una nueva ruta de ejemplo para usar el mismo proceso de las últimas lecciones, pero usando del concepto de composición de decoradores. Vamos a crear un custom decorator de manera manual dentro del módulo de autenticación:
+
+```ts
+import { UseGuards, applyDecorators } from "@nestjs/common";
+import { AuthGuard } from "@nestjs/passport";
+import { ValidRoles } from "../constants";
+import { UserRoleGuard } from "../guards/user-role.guard";
+import { RoleProtected } from "./role-protected.decorator";
+
+export function Auth ( ...roles: ValidRoles[] ) {
+    return applyDecorators(
+        RoleProtected( ...roles ),
+        UseGuards( AuthGuard(), UserRoleGuard )
+    );
+}
+```
+
+Ahora, podemos usar el nuevo decorador dentro del controlador:
+
+```ts
+import { Auth, ... } from './decorators';
+...
+
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing-3' )
+    @Auth( ValidRoles.ADMIN, ValidRoles.SUPERUSER )
+    privateRoute3 ( @GetUser() user: User ) { ... }
+}
+```
+
+En caso de que necesitemos añadir o remover decoradores para el proceso de autenticación, solo tendremos que realizar la modificación dentro del custom decorador `Auth()`.

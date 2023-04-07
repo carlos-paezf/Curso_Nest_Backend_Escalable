@@ -31,3 +31,8 @@ Authorization: Bearer {{token}}
 
 GET {{base_url}}/private-testing-2
 Authorization: Bearer {{token}}
+
+################################################################
+
+GET {{base_url}}/private-testing-3
+Authorization: Bearer {{token}}
