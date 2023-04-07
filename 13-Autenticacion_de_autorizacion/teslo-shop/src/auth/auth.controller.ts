@@ -8,6 +8,8 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { LoginUserDTO } from './dto/login-user.dto';
 import { User } from './entities/user.entity';
 import { UserRoleGuard } from './guards/user-role.guard';
+import { RoleProtected } from './decorators/role-protected.decorator';
+import { ValidRoles } from './constants';
 
 @Controller( 'auth' )
 export class AuthController {
@@ -42,7 +44,7 @@ export class AuthController {
     }
 
     @Get( 'private-testing-2' )
-    @SetMetadata( 'roles', [ 'admin', 'super-user' ] )
+    @RoleProtected( ValidRoles.ADMIN, ValidRoles.SUPERUSER )
     @UseGuards( AuthGuard(), UserRoleGuard )
     privateRoute2 ( @GetUser() user: User ) {
         return {

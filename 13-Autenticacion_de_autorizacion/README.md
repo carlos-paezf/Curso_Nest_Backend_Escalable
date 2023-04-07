@@ -903,3 +903,74 @@ export class UserRoleGuard implements CanActivate {
     }
 }
 ```
+
+## Custom Decorator - RoleProtected
+
+Para evitar la volatilidad al momento de escribir el nombre de la propiedad dentro de la metadata, podemos crear una constante que sea llamada dentro del `SetMetadata` como el custom guard de la lección anterior, los mismo para el nombre de los roles.
+
+Lo primero que haremos será crear un decorador usando el siguiente comando:
+
+```txt
+$: nest g d auth/decorators/role-protected --no-spec --flat
+```
+
+El código base para el decorador será el siguiente:
+
+```ts
+import { SetMetadata } from '@nestjs/common';
+
+export const RoleProtected = (...args: string[]) => SetMetadata('role-protected', args);
+```
+
+Ahora, creamos una constante que nos ayude a mantener el mismo string del nombre de propiedad en la metadata:
+
+```ts
+export const META_ROLES = 'roles';
+```
+
+```ts
+export const RoleProtected = ( ...args: string[] ) => SetMetadata( META_ROLES, args );
+```
+
+```ts
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    ...
+    canActivate ( ... ): boolean | Promise<boolean> | Observable<boolean> {
+        const validRoles: string[] = this._reflector.get( META_ROLES, context.getHandler() );
+        ...
+    }
+}
+```
+
+También vamos a crear un enum que nos sirva de constante para los roles disponibles:
+
+```ts
+export enum ValidRoles {
+    ADMIN = "admin",
+    SUPERUSER = "superuser",
+    USER = "user"
+}
+```
+
+De esta manera controlamos los argumentos que pueden entrar por nuestro nuevo decorador `RoleProtected`:
+
+```ts
+import { SetMetadata } from '@nestjs/common';
+import { META_ROLES, ValidRoles } from '../constants';
+
+export const RoleProtected = ( ...args: ValidRoles[] ) => SetMetadata( META_ROLES, args );
+```
+
+Es momento de usar este decorador dentro del controlador, reemplazando la línea de `SetMetadata`:
+
+```ts
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'private-testing-2' )
+    @RoleProtected( ValidRoles.ADMIN, ValidRoles.SUPERUSER )
+    @UseGuards( AuthGuard(), UserRoleGuard )
+    privateRoute2 ( @GetUser() user: User ) { ... }
+}
+```
