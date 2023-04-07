@@ -1,5 +1,5 @@
 @base_url = http://localhost:3000/api/auth
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkxYWRhNzgwLTc0M2MtNGZiOC1iODU3LTY4MTQwNGIyNGQwMSIsImlhdCI6MTY4MDY2MDA1OCwiZXhwIjoxNjgwNjY3MjU4fQ.V7IotdrGVZ_BeZlfBFBxlwfkDjYSJO-fWXbDQEsA3P4
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjkxYWRhNzgwLTc0M2MtNGZiOC1iODU3LTY4MTQwNGIyNGQwMSIsImlhdCI6MTY4MDkwMTQxMywiZXhwIjoxNjgwOTA4NjEzfQ.I3nloYKlEaBmR6ovvO9gb3tBBXunhxu0kOQg1YkBzaE
 
 ################################################################
 
@@ -25,4 +25,9 @@ Content-Type: application/json
 ################################################################
 
 GET {{base_url}}/private-testing
+Authorization: Bearer {{token}}
+
+################################################################
+
+GET {{base_url}}/private-testing-2
 Authorization: Bearer {{token}}

@@ -856,3 +856,50 @@ export class UserRoleGuard implements CanActivate {
     }
 }
 ```
+
+## Verificar rol del usuario
+
+En la anterior lección vimos como se extrae la información de los roles desde la metadata configurada en el controlador, ahora necesitamos comparar el rol del usuario con los roles que tienen permitido la ejecución del endpoint.
+
+Lo primero será extraer la información del usuario dentro de la request, la cual es guardada en la petición por el guard `AuthGuard()`. Si no existe, retornamos un error, y si ninguno de los roles del usuario coinciden con alguno de los roles definidos en la metadata, retornamos un código de error 403.
+
+```ts
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    constructor ( private readonly _reflector: Reflector ) { }
+
+    canActivate (
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        const validRoles: string[] = this._reflector.get( 'roles', context.getHandler() );
+
+        const user: User = context.switchToHttp().getRequest().user;
+
+        if ( !user )
+            throw new BadRequestException( 'User not found' );
+
+        for ( const role of user.roles ) {
+            if ( validRoles.includes( role ) ) return true;
+        }
+
+        throw new ForbiddenException( `User '${ user.fullName }' need a valid role: [${ validRoles }]` );
+    }
+}
+```
+
+También vamos a controlar el caso en que no haya roles en la metadata, o que tenga un arreglo vacío, en cuyo caso nuestro controlador debe permitir el avance del usuario:
+
+```ts
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    ...
+    canActivate (
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        const validRoles: string[] = this._reflector.get( 'roles', context.getHandler() );
+
+        if ( !validRoles || !validRoles.length ) return true;
+        ...
+    }
+}
+```
