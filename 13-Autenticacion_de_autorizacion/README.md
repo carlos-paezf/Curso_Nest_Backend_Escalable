@@ -1046,3 +1046,48 @@ export class ProductsController {
     ...
 }
 ```
+
+## Usuario que creó el producto
+
+Vamos a crear una relación entre los productos y los usuarios, buscando registrar cual fue el usuario que creo un producto. Un usuario puede crear muchos productos, pero un producto solo puede tener un 1 usuario creador, es decir, que tenemos una relación 1:n. Lo primero será crear una propiedad dentro de `UserEntity`:
+
+```ts
+import { ..., OneToMany } from 'typeorm';
+
+@Entity( 'users' )
+export class User {
+    ...
+    @OneToMany( () => Product, ( product ) => product.user )
+    products: Product[];
+    ...
+}
+```
+
+Luego, dentro de la entidad de productos hacemos la operación inversa de la relación de multiplicidad:
+
+```ts
+import { ..., ManyToOne } from "typeorm";
+...
+
+@Entity( { name: 'products' } )
+export class Product {
+    ...
+    @ManyToOne( () => User, ( user ) => user.products )
+    user: User;
+    ...
+}
+```
+
+Podemos configurar que de manera automática en cada consulta a los productos, se cargue el usuario que lo creo, y para ello añadimos la siguiente configuración:
+
+```ts
+@Entity( { name: 'products' } )
+export class Product {
+    ...
+    @ManyToOne( () => User, ( user ) => user.products, { eager: true } )
+    user: User;
+    ...
+}
+```
+
+Si hacemos la petición en estos momentos obtendremos un user null, ya que dentro del seed no hemos configurado un usuario para los productos que se crean en grupo.
