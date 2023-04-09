@@ -1012,3 +1012,37 @@ export class AuthController {
 ```
 
 En caso de que necesitemos añadir o remover decoradores para el proceso de autenticación, solo tendremos que realizar la modificación dentro del custom decorador `Auth()`.
+
+## Auth en otros módulos
+
+En estos momentos solo estamos usando el decorador de autenticación dentro del módulo `auth`, la intención es que también lo podamos usar en otros módulos, como por ejemplo en el `seed` en el método `executeSeed()`:
+
+```ts
+import { ValidRoles } from '../auth/constants';
+import { Auth } from '../auth/decorators';
+...
+
+@Controller( 'seed' )
+export class SeedController {
+    ...
+    @Get()
+    @Auth( ValidRoles.ADMIN )
+    executeSeed () {
+        return this.seedService.runSeed();
+    }
+}
+```
+
+El problema con esto es que obtenemos el siguiente error en la consola: `In order to use "defaultStrategy", please, ensure to import PassportModule in each place where AuthGuard() is being used. Otherwise, passport won't work correctly.`
+
+Para solucionar el error debemos importar el módulo de `AuthModule` dentro del `SeedModule`, ya que en el primero estamos realizando la importación de la configuración de `JwtStrategy` y `PassportModule`, los cuales son la fuente del error que se mostró anteriormente.
+
+También podemos usar nuestro guard `Auth` a nivel de controlador y sin roles, a modo de que indiquemos que solo pedimos la autenticación y pueden ejecutar cualquiera de los endpoints del controlador sin importar su rol. Por ejemplo, con el controlador de productos (importante no olvidar importar el módulo `AuthModule` dentro de `ProductModule`):
+
+```ts
+@Controller( 'products' )
+@Auth()
+export class ProductsController {
+    ...
+}
+```
