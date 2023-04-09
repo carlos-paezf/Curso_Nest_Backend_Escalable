@@ -1091,3 +1091,52 @@ export class Product {
 ```
 
 Si hacemos la petición en estos momentos obtendremos un user null, ya que dentro del seed no hemos configurado un usuario para los productos que se crean en grupo.
+
+## Insertar userId en los productos
+
+Para crear los productos necesitamos estar autenticados (recordemos que esta restricción la configuramos en la lección [Auth en otros módulos](README.md#auth-en-otros-módulos)). Podremos obtener la información del usuario en la request con el custom decorator `GetUser` a nivel de propiedad de método, y que luego enviaremos al servicio:
+
+```ts
+@Controller( 'products' )
+@Auth()
+export class ProductsController {
+    ...
+    @Post()
+    create ( @Body() createProductDto: CreateProductDto, @GetUser() user: User ) {
+        return this.productsService.create( createProductDto, user );
+    }
+    ...
+}
+```
+
+Dentro del servicio vamos a actualizar el método para que pueda recibir el parámetro y aceptarlo en la nueva información. También aplicamos la misma estrategia al momento de actualizar:
+
+```ts
+@Injectable()
+export class ProductsService {
+    ...
+    async create ( createProductDto: CreateProductDto, user: User ) {
+        try {
+            ...
+            const product = this._productRepository.create( {
+                ...productDetails,
+                user,
+                images: images.map( url => this._productImageRepository.create( { url } ) )
+            } );
+            ...
+        } catch ( error ) { ... }
+    }
+    ...
+    async update ( id: string, updateProductDto: UpdateProductDto, user: User ) {
+        ...
+        try {
+            ...
+            product.user = user;
+            ...
+        } catch ( error ) { ... }
+    }
+    ...
+}
+```
+
+Temporalmente vamos a ignorar la lógica de creación de productos dentro del seed, con el fin de evitar el error que más adelante trataremos.
