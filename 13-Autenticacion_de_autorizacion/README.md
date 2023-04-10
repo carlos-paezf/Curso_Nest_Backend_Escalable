@@ -1140,3 +1140,155 @@ export class ProductsService {
 ```
 
 Temporalmente vamos a ignorar la lógica de creación de productos dentro del seed, con el fin de evitar el error que más adelante trataremos.
+
+## SEED de usuarios, productos e imágenes
+
+Necesitamos corregir el seed, el cual es destructivo ya que elimina los datos anteriores e insertar un grupo nuevo. Lo primero es definir el orden de creación de los datos, en este caso, necesitamos insertar primero los usuarios antes que los productos, para ello, inyectamos el repositorio de usuarios:
+
+```ts
+@Injectable()
+export class SeedService {
+    constructor (
+        @InjectRepository( User ) private readonly _userRepository: Repository<User>,
+        ...
+    ) { }
+    ...
+}
+```
+
+Luego creamos un método para eliminar todos los productos y seguido los usuarios registrados, esto con el objetivo de respectar la restricción CASCADE al momento de la eliminación:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    private async _deleteTables () {
+        await this._productsService.deleteAllProducts();
+
+        await this._userRepository
+            .createQueryBuilder()
+            .delete()
+            .where( {} )
+            .execute();
+    }
+    ...
+}
+```
+
+El anterior método lo llamamos al principio de la función `runSeed()`:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    async runSeed () {
+        await this._deleteTables();
+        await this._insertNewProducts();
+        return 'Seed Executed';
+    }
+    ...
+}
+```
+
+Dentro de la data que se usar para montar el seed, creamos una nueva interfaz para usuarios y que determinará la estructura del objeto dentro del seed:
+
+```ts
+interface SeedUser {
+    email: string;
+    fullName: string;
+    password: string;
+    role: string[];
+}
+
+interface SeedData {
+    users: SeedUser[];
+    products: SeedProduct[];
+}
+```
+
+Lo siguientes es crear datos de usuario falsos para montar en la data:
+
+```ts
+export const initialData: SeedData = {
+    users: [
+        {
+            email: "test1@mail.com",
+            fullName: "Test 1",
+            password: "test123",
+            role: [ 'admin' ]
+        },
+        {
+            email: "test2@mail.com",
+            fullName: "Test 2",
+            password: "test123",
+            role: [ 'admin', 'user' ]
+        }
+    ],
+    products: [ ... ]
+}
+```
+
+Volvemos al servicio y creamos un método para insertar los usuarios y que además retorne al primer usuario de la data, que usaremos dentro del objeto de productos:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    private async _insertUsers () {
+        const seedUsers = initialData.users;
+
+        const users: User[] = [];
+
+        seedUsers.forEach( user => {
+            users.push( this._userRepository.create( user ) );
+        } );
+
+        const dbUsers = await this._userRepository.save( seedUsers );
+
+        return dbUsers[ 0 ];
+    }
+    ...
+}
+```
+
+En el método de ejecución del seed llamamos la nueva función para obtener el primer usuario y enviarlo como parámetro a la función de creación de productos:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    async runSeed () {
+        ...
+        const adminUser = await this._insertUsers();
+        await this._insertNewProducts( adminUser );
+        ...
+    }
+    ...
+}
+```
+
+Modificamos el método de creación de productos para admitir el usuario:
+
+```ts
+@Injectable()
+export class SeedService {
+    ...
+    private async _insertNewProducts ( user: User ) {
+        await this._productsService.deleteAllProducts();
+
+        const seedProduts = initialData.products;
+
+        const insertPromises = [];
+
+        seedProduts.forEach( product => {
+            insertPromises.push( this._productsService.create( product, user ) );
+        } );
+
+        await Promise.all( insertPromises );
+
+        return;
+    }
+}
+```
+
+Cuando ejecutamos el seed, podremos observar que los nuevos productos cuentan con el id de un usuario, el cual fue creado en la misma ejecución del seed.
