@@ -1243,7 +1243,7 @@ export class SeedService {
             users.push( this._userRepository.create( user ) );
         } );
 
-        const dbUsers = await this._userRepository.save( seedUsers );
+        const dbUsers = await this._userRepository.save( users );
 
         return dbUsers[ 0 ];
     }
@@ -1292,3 +1292,54 @@ export class SeedService {
 ```
 
 Cuando ejecutamos el seed, podremos observar que los nuevos productos cuentan con el id de un usuario, el cual fue creado en la misma ejecución del seed.
+
+## Encriptar contraseña de los usuarios en el SEED
+
+Hemos pasado la información en seco dentro del seed, por lo que podemos observar la contraseña de los usuarios dentro de la base de datos, y además no podrá hacer match al momento de realizar la autenticación. Para evitar lo anterior vamos a encriptar la contraseña del usuario:
+
+```ts
+import * as bcrypt from 'bcrypt';
+...
+
+@Injectable()
+export class SeedService {
+    ...
+    private async _insertUsers () {
+        ...
+        seedUsers.forEach( user => {
+            const { password, ...userData } = user;
+
+            users.push( this._userRepository.create( {
+                ...userData,
+                password: bcrypt.hashSync( password, 10 )
+            } ) );
+        } );
+        ...
+    }
+    ...
+}
+```
+
+Otra solución, y quizás la más simple, es encriptar la contraseña directamente en la data del seed:
+
+```ts
+import * as bcrypt from 'bcrypt';
+...
+export const initialData: SeedData = {
+    users: [
+        {
+            email: "test1@mail.com",
+            fullName: "Test 1",
+            password: bcrypt.hashSync( "test123", 10 ),
+            role: [ 'admin' ]
+        },
+        {
+            email: "test2@mail.com",
+            fullName: "Test 2",
+            password: bcrypt.hashSync( "test123", 10 ),
+            role: [ 'admin', 'user' ]
+        }
+    ],
+    products: [ ... ]
+};
+```

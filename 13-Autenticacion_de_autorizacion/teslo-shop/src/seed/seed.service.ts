@@ -38,7 +38,7 @@ export class SeedService {
             users.push( this._userRepository.create( user ) );
         } );
 
-        const dbUsers = await this._userRepository.save( seedUsers );
+        const dbUsers = await this._userRepository.save( users );
 
         return dbUsers[ 0 ];
     }
