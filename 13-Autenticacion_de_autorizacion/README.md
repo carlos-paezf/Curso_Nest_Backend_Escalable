@@ -1197,7 +1197,7 @@ interface SeedUser {
     email: string;
     fullName: string;
     password: string;
-    role: string[];
+    roles: string[];
 }
 
 interface SeedData {
@@ -1215,13 +1215,13 @@ export const initialData: SeedData = {
             email: "test1@mail.com",
             fullName: "Test 1",
             password: "test123",
-            role: [ 'admin' ]
+            roles: [ 'admin' ]
         },
         {
             email: "test2@mail.com",
             fullName: "Test 2",
             password: "test123",
-            role: [ 'admin', 'user' ]
+            roles: [ 'admin', 'user' ]
         }
     ],
     products: [ ... ]
@@ -1342,4 +1342,43 @@ export const initialData: SeedData = {
     ],
     products: [ ... ]
 };
+```
+
+## Check AuthStatus
+
+Vamos a recibir el JWT y retornar un nuevo token basado en el anterior, esto con el fin de poder mantener validado el usuario todo el tiempo de acción. Básicamente revalidamos la autenticación del usuario. Primero definimos el punto de llegada dentro del controlador:
+
+```ts
+@Controller( 'auth' )
+export class AuthController {
+    ...
+    @Get( 'check-status' )
+    @Auth()
+    checkAuthStatus ( @GetUser() user: User ) {
+        return this.authService.checkAuthStatus( user );
+    }
+}
+```
+
+Pasamos con el servicio y creamos el método:
+
+```ts
+@Injectable()
+export class AuthService {
+    ...
+    checkAuthStatus ( user: User ) {
+        return {
+            token: this._getJwtToken( { id: user.id } ),
+            user
+        };
+    }
+    ...
+}
+```
+
+Al momento de hacer la petición debemos enviar el token que actualmente tenga el usuario para poder saber si está autenticado y poder regenerar su token, de lo contrario obtendrá un status 401:
+
+```txt
+GET {{base_url}}/check-status
+Authorization: Bearer {{token}}
 ```
