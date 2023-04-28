@@ -76,3 +76,97 @@ async function bootstrap () {
 ```
 
 Ahora, cuando ingresamos a `http://localhost:3000/api/` podremos observar todos los endpoints de nuestro backend, definiendo el verbo HTTP y el endpoint al cual apunta. Aunque esta nueva vista tiene lo básico de la documentación, debemos mejorarla mediante los decoradores que nos ofrece el módulo que acabamos de importar.
+
+## Tags, ApiProperty y ApiResponse
+
+Vamos a agrupar los endpoints según los módulos que creamos en nuestro proyecto, con el objetivo de tener un label dentro de la documentación de Swagger. Empecemos en el módulo de productos: Primero importamos el decorador `@ApiTags` dentro del controlador y lo llamamos a nivel de clase con el nombre del módulo:
+
+```ts
+import { ApiTags } from '@nestjs/swagger';
+...
+
+@ApiTags( 'Productos' )
+...
+export class ProductsController { ... }
+```
+
+Para tener organizada la documentación, agregamos la misma documentación dentro de los demás módulos (auth, files, seed).
+
+En cada endpoint podemos especificar la respuesta esperada tanto en casos correctos, como en los que no. Esto lo logramos con el decorador `@ApiResponse`:
+
+```ts
+import { ApiResponse, ... } from '@nestjs/swagger';
+...
+export class ProductsController {
+    ...
+    @Post()
+    @ApiResponse( { status: 201, description: 'Product was created' } )
+    @ApiResponse( { status: 400, description: 'Bad Request' } )
+    @ApiResponse( { status: 403, description: 'Forbidden. Token related' } )
+    create ( ... ) { ... }
+    ...
+}
+```
+
+También podemos definir el tipo de respuesta que se espera, por ejemplo para el caso del status 201:
+
+```ts
+export class ProductsController {
+    ...
+    @ApiResponse( { status: 201, description: 'Product was created', type: Product } )
+    ...
+    create ( ... ) { ... }
+    ...
+}
+```
+
+El problema es que el esquema que está mostrando Swagger es un objeto vacío, lo cual es incorrecto. Para solucionar este error, debemos ir a la entidad de productos y añadir un nuevo decorador llamado `@ApiProperty` a nivel de propiedades:
+
+```ts
+import { ApiProperty } from "@nestjs/swagger";
+...
+
+@Entity( { name: 'products' } )
+export class Product {
+    @ApiProperty()
+    @PrimaryGeneratedColumn( 'uuid' )
+    id: string;
+
+    @ApiProperty()
+    @Column( ... )
+    title: string;
+
+    @ApiProperty()
+    @Column( ... )
+    price: number;
+
+    @ApiProperty()
+    @Column( ... )
+    description: string;
+
+    @ApiProperty()
+    @Column( ... )
+    slug: string;
+
+    @ApiProperty()
+    @Column( ... )
+    stock: number;
+
+    @ApiProperty()
+    @Column( ... )
+    sizes: string[];
+
+    @ApiProperty()
+    @Column( 'text' )
+    gender: string;
+
+    @ApiProperty()
+    @Column( ... )
+    tags: string[];
+
+    @ApiProperty()
+    @OneToMany( ... )
+    images?: ProductImage[];
+    ...
+}
+```
