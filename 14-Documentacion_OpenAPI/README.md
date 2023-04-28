@@ -269,3 +269,7 @@ import { CreateProductDto } from './create-product.dto';
 
 export class UpdateProductDto extends PartialType( CreateProductDto ) { }
 ```
+
+## Pequeño ejemplo de Documentación con OpenAPI y Swagger en Nest
+
+En el siguiente enlace perteneciente a otro curso de Nest, podemos ver otro ejemplo de documentación con Swagger: <https://github.com/carlos-paezf/NestJS_de_0_a_100/blob/main/DOC/P13T1_Documentacion_Swagger_OpenAPI.md>
