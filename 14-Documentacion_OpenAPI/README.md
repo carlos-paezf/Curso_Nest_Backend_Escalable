@@ -170,3 +170,21 @@ export class Product {
     ...
 }
 ```
+
+## Expandir el ApiProperty
+
+Podemos expandir la definición del decorador `ApiProperty` añadiendo diferentes propiedades, las cuales se verán reflejadas en el esquema de respuesta que podemos consultar en nuestra documentación con Swagger, por ejemplo:
+
+```ts
+@Entity( { name: 'products' } )
+export class Product {
+    @ApiProperty( {
+        example: '0334cfd8-ade8-45d7-a37b-3328108a7113',
+        description: 'Product Id',
+        uniqueItems: true
+    } )
+    @PrimaryGeneratedColumn( 'uuid' )
+    id: string;
+    ...
+}
+```

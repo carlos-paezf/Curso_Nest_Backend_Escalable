@@ -5,7 +5,11 @@ import { ApiProperty } from "@nestjs/swagger";
 
 @Entity( { name: 'products' } )
 export class Product {
-    @ApiProperty()
+    @ApiProperty( {
+        example: '0334cfd8-ade8-45d7-a37b-3328108a7113',
+        description: 'Product Id',
+        uniqueItems: true
+    } )
     @PrimaryGeneratedColumn( 'uuid' )
     id: string;
 
