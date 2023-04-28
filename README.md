@@ -35,3 +35,4 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 12: Carga de archivos](./12-Carga_archivos/README.md)
 - [Sección 13: Autenticación de autorización](./13-Autenticacion_de_autorizacion/README.md)
 - [Sección 14: Documentación - OpenAPI](./14-Documentacion_OpenAPI/README.md)
+- [Sección 15: Websockets](./15-Websockets/README.md)
