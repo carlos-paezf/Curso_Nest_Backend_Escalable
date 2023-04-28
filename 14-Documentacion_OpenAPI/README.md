@@ -188,3 +188,84 @@ export class Product {
     ...
 }
 ```
+
+## Documentar DTOs
+
+Documentar los DTOs es importante para mostrar como debe lucir el body de una petición. Tomaremos como ejemplo el DTO de paginación en el archivo `pagination.dto.ts`. Para documentar sus propiedades usamos el mismo decorador `@ApiProperty`:
+
+```ts
+import { ApiProperty } from '@nestjs/swagger';
+...
+
+export class PaginationDto {
+    @ApiProperty( {
+        default: 10,
+        description: 'How many rows do you need?'
+    } )
+    ...
+    limit?: number;
+
+    @ApiProperty( {
+        default: 0,
+        description: 'How many rows do you want to skip?'
+    } )
+    ...
+    offset?: number;
+}
+```
+
+Haremos los mismo para `CreateProductDTO`:
+
+```ts
+export class CreateProductDto {
+    @ApiProperty( {
+        description: 'Product title (unique)',
+        uniqueItems: true
+    } )
+    ...
+    title: string;
+
+    @ApiProperty()
+    ...
+    price?: number;
+
+    @ApiProperty()
+    ...
+    description?: string;
+
+    @ApiProperty( {
+        required: false
+    } )
+    ...
+    slug?: string;
+
+    @ApiProperty()
+    ...
+    stock?: number;
+
+    @ApiProperty()
+    ...
+    sizes: string[];
+
+    @ApiProperty()
+    ...
+    gender: string;
+
+    @ApiProperty()
+    ...
+    tags?: string[];
+
+    @ApiProperty()
+    ...
+    images?: string[];
+}
+```
+
+A pesar de que el DTO de actualización de productos hereda del anterior DTO, no podremos ver el esquema dentro del request body. Lo que podemos hacer para solucionar es realizar la importación de `PartialType` desde Swagger y no desde `@nest/mapped-types`, y de esta manera reconoce las propiedades de la api y todas serán opcionales para la actualización:
+
+```ts
+import { PartialType } from '@nestjs/swagger';
+import { CreateProductDto } from './create-product.dto';
+
+export class UpdateProductDto extends PartialType( CreateProductDto ) { }
+```
