@@ -1,6 +1,9 @@
 # environment
 .env
 
+# docker bind volume
+/postgres
+
 # compiled output
 /dist
 /node_modules

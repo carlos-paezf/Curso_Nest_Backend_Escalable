@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { JoiValidationSchema } from './config/joi.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonsModule } from './commons/commons.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module( {
     imports: [
@@ -21,7 +22,8 @@ import { CommonsModule } from './commons/commons.module';
             synchronize: true
         } ),
         AuthModule,
-        CommonsModule
+        CommonsModule,
+        SeedModule
     ],
 } )
 export class AppModule { }

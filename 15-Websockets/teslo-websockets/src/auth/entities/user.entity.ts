@@ -25,7 +25,7 @@ export class User {
     isActive: string;
 
     @ApiProperty( { enum: ValidRoles, isArray: true, required: false } )
-    @Column( { type: 'text', array: true, default: ValidRoles.USER } )
+    @Column( { type: 'text', array: true, default: [ ValidRoles.USER ] } )
     roles: ValidRoles[];
 
     @BeforeInsert()

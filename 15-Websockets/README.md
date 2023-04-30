@@ -33,7 +33,29 @@ $: pnpm i --save @nestjs/swagger
 Algunos paquetes adicionales que hemos usado en otras lecciones los vamos a usar con el siguiente comando:
 
 ```txt
-$: pnpm i -S bcrypt class-validator joi passport-jwt typeorm @nestjs/config @nestjs/jwt @nestjs/passport @nestjs/typeorm
+$: pnpm i -S bcrypt class-validator class-transformer joi passport-jwt pg typeorm @nestjs/config @nestjs/jwt @nestjs/passport @nestjs/typeorm
+```
+
+### Configuración de la base de datos
+
+Para la base de datos usaremos un servicio de postgres en docker-compose, por lo que creamos el archivo `docker-compose.yml` a raíz del proyecto con el siguiente contenido:
+
+```yaml
+version: '3'
+
+services:
+    db:
+        image: postgres:14.3
+        container_name: ${DB_NAME}
+        restart: always
+        ports:
+            - "${DB_PORT}:5432"
+        environment:
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
+        volumes:
+            - ./postgres:/var/lib/postgresql/data
 ```
 
 ### Configuración del punto de acceso al proyecto
@@ -512,3 +534,289 @@ export class AuthService {
     }
 }
 ```
+
+#### Decorador de autenticación
+
+Crearemos el decorador que nos permite validar el uso de un endpoint basado en sus roles, y para esto usamos el siguiente comando:
+
+```txt
+$: nest g d auth/decorators/role-protected --no-spec --flat
+```
+
+El decorador configurara la metadata que se debe pasar dentro de la petición de la siguiente manera:
+
+```ts
+import { SetMetadata } from '@nestjs/common';
+import { META_ROLES, ValidRoles } from '../constants';
+
+export const RoleProtected = ( ...args: ValidRoles[] ) => SetMetadata( META_ROLES, args );
+```
+
+Luego creamos un guard con el comando a continuación, que controle la activación de la ruta, basado en los roles que lleguen en la metadata:
+
+```txt
+$: nest g gu auth/guards/user-role --no-spec --flat
+```
+
+El guard compara los roles validos, con los roles que tiene el usuario en la base de datos:
+
+```ts
+import { BadRequestException, CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import { Observable } from 'rxjs';
+import { META_ROLES } from '../constants';
+import { User } from '../entities/user.entity';
+
+@Injectable()
+export class UserRoleGuard implements CanActivate {
+    constructor ( private readonly _reflector: Reflector ) { }
+
+    canActivate (
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        const validRoles: string[] = this._reflector.get( META_ROLES, context.getHandler() );
+
+        if ( !validRoles || !validRoles.length ) return true;
+
+        const user: User = context.switchToHttp().getRequest().user;
+
+        if ( !user ) throw new BadRequestException( 'User not found' );
+
+        for ( const role of user.roles ) {
+            if ( validRoles.includes( role ) ) return true;
+        }
+
+        throw new ForbiddenException( `User '${ user.fullName }' need a valid role: [${ validRoles }]` );
+    }
+}
+
+```
+
+Por último, creamos una composición de decoradores para aplicar todo lo anterior:
+
+```txt
+$: nest g d auth/decorators/auth --no-spec --flat
+```
+
+Este nuevo archivo contendrá la siguiente lógica:
+
+```ts
+import { UseGuards, applyDecorators } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ValidRoles } from '../constants';
+import { UserRoleGuard } from '../guards/user-role.guard';
+import { RoleProtected } from './role-protected.decorator';
+
+export const Auth = ( ...roles: ValidRoles[] ) => {
+    return applyDecorators(
+        RoleProtected( ...roles ),
+        UseGuards( AuthGuard(), UserRoleGuard )
+    );
+};
+```
+
+#### Decorador para obtención del usuario en la request
+
+Necesitamos un decorador que nos permita a nivel de propiedad, obtener la información de un usuario que hace la petición, para ello usamos el siguiente controlador:
+
+```txt
+$: nest g d auth/decorators/get-user --no-spec --flat
+```
+
+El decorador tiene esta apariencia:
+
+```ts
+import { ExecutionContext, InternalServerErrorException, createParamDecorator } from '@nestjs/common';
+
+export const GetUser = createParamDecorator( ( data, ctx: ExecutionContext ) => {
+    const request = ctx.switchToHttp().getRequest();
+    const user = request.user;
+
+    if ( !user ) throw new InternalServerErrorException( 'User not found in request' );
+
+    return ( !data ) ? user : user[ data ];
+} );
+```
+
+#### Controlador
+
+En el controlador contaremos inicialmente con 3 endpoints: registro, login y verificación del token:
+
+```ts
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Auth } from './decorators/auth.decorator';
+import { User } from './entities/user.entity';
+import { CreateUserDTO, LoginUserDTO } from './dtos';
+import { GetUser } from './decorators/get-user.decorator';
+
+@ApiTags( 'Auth' )
+@Controller( 'auth' )
+export class AuthController {
+    constructor ( private readonly authService: AuthService ) { }
+
+    @Post( 'register' )
+    @ApiResponse( { status: 201, description: 'User was registered' } )
+    register ( @Body() createUserDto: CreateUserDTO ) {
+        return this.authService.create( createUserDto );
+    }
+
+    @Post( 'login' )
+    @ApiResponse( { status: 200, description: 'Successful login' } )
+    @ApiResponse( { status: 401, description: 'Invalid Credentials' } )
+    login ( @Body() loginUserDto: LoginUserDTO ) {
+        return this.authService.login( loginUserDto );
+    }
+
+    @Get( 'check-status' )
+    @Auth()
+    @ApiResponse( { status: 200, description: 'Renew token' } )
+    checkAuthStatus ( @GetUser() user: User ) {
+        return this.authService.checkAuthStatus( user );
+    }
+}
+```
+
+#### Seed
+
+Para el momento de desarrollo vamos a crear un módulo seed con información de ejemplo que se pueda usar en las pruebas. Para esto vamos a usar el siguiente comando:
+
+```txt
+$: nest g mo seed --no-spec
+```
+
+Tendremos un archivo llamado `data/seed-data.ts` en donde ubicamos la siguiente información:
+
+```ts
+import * as bcrypt from 'bcrypt';
+import { ValidRoles } from '../../auth/constants';
+
+interface SeedUser {
+    email: string;
+    fullName: string;
+    password: string;
+    roles: ValidRoles[];
+}
+
+interface SeedData {
+    users: SeedUser[];
+}
+
+
+export const initialData: SeedData = {
+    users: [
+        {
+            email: "test1@mail.com",
+            fullName: "Test 1",
+            password: bcrypt.hashSync( "test123", 10 ),
+            roles: [ ValidRoles.ADMIN ]
+        },
+        {
+            email: "test2@mail.com",
+            fullName: "Test 2",
+            password: bcrypt.hashSync( "test123", 10 ),
+            roles: [ ValidRoles.ADMIN, ValidRoles.USER ]
+        }
+    ]
+};
+```
+
+Dentro del `seed.module.ts` debemos realizar la importación de los módulos necesarios para el funcionamiento del seed, en este caso el `AuthModule` en donde se ubica la entidad de usuarios:
+
+```ts
+import { Module } from '@nestjs/common';
+import { AuthModule } from '../auth/auth.module';
+import { SeedController } from './seed.controller';
+import { SeedService } from './seed.service';
+
+@Module( {
+    imports: [
+        AuthModule
+    ],
+    controllers: [ SeedController ],
+    providers: [ SeedService ]
+} )
+export class SeedModule { }
+```
+
+Creamos un servicio con los siguientes métodos:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../auth/entities/user.entity';
+import { initialData } from './data/seed-data';
+
+@Injectable()
+export class SeedService {
+    constructor (
+        @InjectRepository( User ) private readonly _userRepository: Repository<User>,
+    ) { }
+
+    async runSeed () {
+        await this._deleteTables();
+        await this._insertUsers();
+        return 'Seed Executed';
+    }
+
+    private async _deleteTables () {
+
+        await this._userRepository
+            .createQueryBuilder()
+            .delete()
+            .where( {} )
+            .execute();
+    }
+
+    private async _insertUsers () {
+        const seedUsers = initialData.users;
+
+        const users: User[] = [];
+
+        seedUsers.forEach( user => {
+            users.push( this._userRepository.create( user ) );
+        } );
+
+        const dbUsers = await this._userRepository.save( users );
+
+        return dbUsers[ 0 ];
+    }
+}
+```
+
+Por último en el controlador añadimos la siguiente información:
+
+```ts
+import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { SeedService } from './seed.service';
+
+@ApiTags( 'Seed' )
+@Controller( 'seed' )
+export class SeedController {
+    constructor ( private readonly seedService: SeedService ) { }
+
+    @Get()
+    executeSeed () {
+        return this.seedService.runSeed();
+    }
+}
+```
+
+### Comando para la ejecución del proyecto
+
+Vamos a levantar la base de datos con el siguiente comando:
+
+```txt
+$: docker-compose up -d
+```
+
+Y levantamos el proyecto en modo desarrollo con el siguiente comando:
+
+```txt
+$: pnpm start:dev
+```
+
+Para tener los datos de prueba debemos usar el endpoint `http://localhost:3000/api/seed/`
