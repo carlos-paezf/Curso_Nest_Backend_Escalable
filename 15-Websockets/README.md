@@ -805,7 +805,7 @@ export class SeedController {
 }
 ```
 
-### Comando para la ejecución del proyecto
+### Comandos para la ejecución del proyecto
 
 Vamos a levantar la base de datos con el siguiente comando:
 
@@ -820,3 +820,5 @@ $: pnpm start:dev
 ```
 
 Para tener los datos de prueba debemos usar el endpoint `http://localhost:3000/api/seed/`
+
+## Websocket Gateways
