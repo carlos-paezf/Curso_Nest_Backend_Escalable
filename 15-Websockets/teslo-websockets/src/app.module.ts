@@ -5,6 +5,7 @@ import { JoiValidationSchema } from './config/joi.validation';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonsModule } from './commons/commons.module';
 import { SeedModule } from './seed/seed.module';
+import { MessagesWsModule } from './messages-ws/messages-ws.module';
 
 @Module( {
     imports: [
@@ -23,7 +24,8 @@ import { SeedModule } from './seed/seed.module';
         } ),
         AuthModule,
         CommonsModule,
-        SeedModule
+        SeedModule,
+        MessagesWsModule
     ],
 } )
 export class AppModule { }

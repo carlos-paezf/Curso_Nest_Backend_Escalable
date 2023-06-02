@@ -822,3 +822,40 @@ $: pnpm start:dev
 Para tener los datos de prueba debemos usar el endpoint `http://localhost:3000/api/seed/`
 
 ## Websocket Gateways
+
+Vamos a crear un Gateway que se conecte con los Web Sockets, los cuales nos permiten tener información en tiempo real desde el backend mediante una comunicación activa de "tu a tu". Los Web Sockets le permiten al servidor comunicarse con el cliente. Podríamos pensar que un Gateways actúa como un controlador, pero se diferencia por su implementación con socket.io y/o ws.
+
+Para generar un gateway podemos usar el comando para generar recursos, pero con la opción de websockets.
+
+```txt
+$: nest g res messages-ws --no-spec
+? What transport layer do you use? WebSockets
+? Would you like to generate CRUD entry points? No
+```
+
+La apariencia inicial de un gateway es la siguiente:
+
+```ts
+import { WebSocketGateway } from '@nestjs/websockets';
+import { MessagesWsService } from './messages-ws.service';
+
+@WebSocketGateway()
+export class MessagesWsGateway {
+    constructor ( private readonly messagesWsService: MessagesWsService ) { }
+}
+```
+
+Es importante realizar la instalación del paquete para los websockets con el siguiente comando:
+
+```txt
+$: npm i -S @nestjs/websockets @nestjs/platform-socket.io
+```
+
+Lo siguiente es realizar una modificación al decorador `@WebSocketGateway` para activar los cors:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway { ... }
+```
+
+Para comprobar que si está funcionando el nuevo módulo, apuntamos una petición GET a la siguiente dirección `localhost:3000/socket.io/socket.io.js`, y obtendremos el contenido del archivo js de la librería.
