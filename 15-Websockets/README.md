@@ -848,7 +848,7 @@ export class MessagesWsGateway {
 Es importante realizar la instalación del paquete para los websockets con el siguiente comando:
 
 ```txt
-$: npm i -S @nestjs/websockets @nestjs/platform-socket.io
+$: pnpm i -S @nestjs/websockets @nestjs/platform-socket.io
 ```
 
 Lo siguiente es realizar una modificación al decorador `@WebSocketGateway` para activar los cors:
@@ -859,3 +859,37 @@ export class MessagesWsGateway { ... }
 ```
 
 Para comprobar que si está funcionando el nuevo módulo, apuntamos una petición GET a la siguiente dirección `localhost:3000/socket.io/socket.io.js`, y obtendremos el contenido del archivo js de la librería.
+
+## Server - Escuchar conexiones y desconexiones
+
+El servidor será nuestra aplicación de Nest, y el cliente será la aplicación de frontend que se conectará a través de los web sockets. Un namespaces es el nombre que recibe la sala o espacio a la que se conectan los usuarios.
+
+Primero vamos a instalar el paquete oficial de Socket.io:
+
+```txt
+$: pnpm i socket.io
+```
+
+Cuando un cliente se conecta o desconecta, podemos reaccionar y capturar información del mismo, y para ello implementamos algunas interfaces dentro del gateway:
+
+```ts
+import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway } from '@nestjs/websockets';
+import { MessagesWsService } from './messages-ws.service';
+import { Socket } from 'socket.io';
+...
+
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    constructor ( private readonly messagesWsService: MessagesWsService ) { }
+
+    handleConnection ( client: any ) {
+        console.log( `Client connected: ${ client.id }` );
+    }
+
+    handleDisconnect ( client: Socket ) {
+        console.log( `Client disconnected: ${ client.id }` );
+    }
+}
+```
+
+En base a los métodos implementados podremos usar la información del cliente en las siguiente lecciones.
