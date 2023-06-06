@@ -893,3 +893,60 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
 ```
 
 En base a los métodos implementados podremos usar la información del cliente en las siguiente lecciones.
+
+## Cliente - Vite Vanilla TypeScript
+
+Vamos a crear una aplicación cliente mediante Vite con un template de Vanilla TS, para ello usamos el siguiente comando:
+
+```txt
+$: pnpm create vite ws-client --template vanilla-ts
+```
+
+Para levantar la aplicación usamos el comando:
+
+```txt
+$: pnpm dev
+```
+
+Dentro del proyecto cliente instalamos el siguiente paquete (idealmente debemos instalar la misma versión del paquete que se encuentra en el backend):
+
+```txt
+$: pnpm i socket.io-client
+```
+
+Creamos un archivo llamado `socket-client.ts` y añadimos la siguiente lógica:
+
+```ts
+import { Manager } from 'socket.io-client';
+
+export const connectToServer = () => {
+    const manager = new Manager( 'http://localhost:3000/socket.io/socket.io.js' );
+
+    const socket = manager.socket( '/' );
+};
+```
+
+Esto lo complementamos con las siguiente líneas en `main.ts`:
+
+```ts
+import { connectToServer } from './socket-client';
+import './style.css';
+
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        <h1>Websocket Client</h1>
+        <span>offline</span>
+    </div>
+`;
+
+connectToServer();
+```
+
+Ahora, cada que recargamos la dirección donde está corriendo el cliente, o creamos nuevas pestañas de la misma, podremos observar en los logs del back que se muestra una dirección del cliente al momento de conectarse o desconectarse, ejemplo:
+
+```txt
+Client connected: ZViDLxFlXr7eDKo_AAAB
+Client disconnected: ZViDLxFlXr7eDKo_AAAB
+Client connected: uLuqgnDyliDODmECAAAD
+Client disconnected: uLuqgnDyliDODmECAAAD
+```
