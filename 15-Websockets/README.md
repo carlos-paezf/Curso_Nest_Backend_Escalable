@@ -1128,3 +1128,65 @@ const addListeners = ( socket: Socket ) => {
 ```
 
 Ahora, cada vez que se abre una nueva instancia del cliente, podemos observar el id del socket que le pertenece, y el cual se va a refrescar cada que se recarga la página.
+
+## Emitir Cliente - Escuchar Servidor
+
+En la anterior lección logramos emitir desde el servidor y escuchar en el cliente, pero ahora vamos a emitir un evento desde el cliente y lo vamos a recibir en el servidor. Lo primero será crear un formulario dentro del cliente:
+
+```ts
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        ...
+        <form id="message-form">
+            <input placeholder="message" id="message-input" />
+        </form>
+    </div>
+`;
+```
+
+En el archivo de `socket-client.ts` nos encargamos de la emisión del evento al momento de enviar el formulario:
+
+```ts
+const addListeners = ( socket: Socket ) => {
+    ...
+    const msgForm = document.querySelector( '#message-form' )! as HTMLFormElement;
+    const msgInput = document.querySelector( '#message-input' )! as HTMLInputElement;
+    ...
+    msgForm.addEventListener( 'submit', ( event ) => {
+        event.preventDefault();
+
+        if ( !msgInput.value.trim().length ) return;
+
+        socket.emit( 'message-client', { id: socket.id, message: msgInput.value } );
+
+        msgInput.value = ''
+    } );
+};
+```
+
+Ahora, dentro del servidor debemos escuchar el evento, y esto lo vamos a hacer dentro del gateway. Nest nos provee un decorador con el cual nos podemos suscribir de manera inmediata a los eventos emitidos por el cliente, simplificando el proceso de codificación dentro del gateway:
+
+```ts
+import { ..., SubscribeMessage } from '@nestjs/websockets';
+...
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    @SubscribeMessage( 'message-client' )
+    onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
+        console.table( { wsClientId: client.id, ...payload } );
+    }
+}
+```
+
+La impresión que vamos a tener en la consola del backend al momento de escuchar el evento será la siguiente:
+
+```txt
+┌────────────┬────────────────────────┐
+│  (index)   │         Values         │
+├────────────┼────────────────────────┤
+│ wsClientId │ 'nC6qcA4rex2QXSQWAAAB' │
+│     id     │ 'nC6qcA4rex2QXSQWAAAB' │
+│  message   │         'hola'         │
+└────────────┴────────────────────────┘
+```

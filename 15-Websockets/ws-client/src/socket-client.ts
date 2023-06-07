@@ -13,6 +13,8 @@ export const connectToServer = () => {
 const addListeners = ( socket: Socket ) => {
     const serverStatusSpan = document.querySelector( '#server-status' )!;
     const clientsUl = document.querySelector( '#clients-ul' )!;
+    const msgForm = document.querySelector( '#message-form' )! as HTMLFormElement;
+    const msgInput = document.querySelector( '#message-input' )! as HTMLInputElement;
 
     socket.on( 'connect', () => {
         serverStatusSpan.innerHTML = 'connected';
@@ -30,5 +32,15 @@ const addListeners = ( socket: Socket ) => {
         } );
 
         clientsUl.innerHTML = clientsHtml;
+    } );
+
+    msgForm.addEventListener( 'submit', ( event ) => {
+        event.preventDefault();
+
+        if ( !msgInput.value.trim().length ) return;
+
+        socket.emit( 'message-client', { id: socket.id, message: msgInput.value } );
+
+        msgInput.value = '';
     } );
 };
