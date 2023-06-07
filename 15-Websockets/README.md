@@ -1059,3 +1059,72 @@ const addListeners = ( socket: Socket ) => {
 ```
 
 De esta manera, cada que el cliente se conecta o desconecta del servidor, el usuario tendrá la forma de observar su status frente al servidor.
+
+## Cliente / Servidor - Clientes conectados
+
+En la aplicación del cliente vamos a crear un order list para mostrar inicial los ids sockets de los clientes conectados:
+
+```ts
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        ...
+        <ul id="clients-ul"></ul>
+    </div>
+`;
+```
+
+Dentro del servidor vamos al servicio y modificamos el método de retornar los clientes conectados, con el objetivo de retornar sus ids:
+
+```ts
+@Injectable()
+export class MessagesWsService {
+    ...
+    getConnectedClients (): string[] {
+        return Object.keys( this.connectedClients );
+    }
+}
+```
+
+Luego, en el gateway creamos una propiedad que tendrá acceso al servidor de websockets y por medio del cual emitimos el evento de clientes conectados:
+
+```ts
+import { ..., WebSocketServer } from '@nestjs/websockets';
+
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer() wss: Server;
+    ...
+    handleConnection ( client: Socket ) {
+        this.messagesWsService.registerClient( client );
+
+        this.wss.emit( 'clients-updated', this.messagesWsService.getConnectedClients() );
+    }
+
+    handleDisconnect ( client: Socket ) {
+        this.messagesWsService.removeClient( client.id );
+
+        this.wss.emit( 'clients-updated', this.messagesWsService.getConnectedClients() );
+    }
+}
+```
+
+De vuelta al cliente, debemos escuchar el evento emitido por el server dentro de `socket-client.ts`:
+
+```ts
+const addListeners = ( socket: Socket ) => {
+    ...
+    const clientsUl = document.querySelector( '#clients-ul' )!;
+    ...
+    socket.on( 'clients-updated', ( clients: string[] ) => {
+        let clientsHtml = '';
+
+        clients.forEach( id => {
+            clientsHtml += `<li>${ id }</li>`;
+        } );
+
+        clientsUl.innerHTML = clientsHtml;
+    } );
+};
+```
+
+Ahora, cada vez que se abre una nueva instancia del cliente, podemos observar el id del socket que le pertenece, y el cual se va a refrescar cada que se recarga la página.

@@ -12,12 +12,23 @@ export const connectToServer = () => {
 
 const addListeners = ( socket: Socket ) => {
     const serverStatusSpan = document.querySelector( '#server-status' )!;
+    const clientsUl = document.querySelector( '#clients-ul' )!;
 
     socket.on( 'connect', () => {
-        serverStatusSpan.textContent = 'connected';
+        serverStatusSpan.innerHTML = 'connected';
     } );
 
     socket.on( 'disconnect', () => {
-        serverStatusSpan.textContent = 'disconnected';
+        serverStatusSpan.innerHTML = 'disconnected';
+    } );
+
+    socket.on( 'clients-updated', ( clients: string[] ) => {
+        let clientsHtml = '';
+
+        clients.forEach( id => {
+            clientsHtml += `<li>${ id }</li>`;
+        } );
+
+        clientsUl.innerHTML = clientsHtml;
     } );
 };
