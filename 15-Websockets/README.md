@@ -1019,3 +1019,43 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
     ...
 }
 ```
+
+## Cliente - Detectar conexión y desconexión
+
+Vamos a mostrarle al cliente cuando logra conectarse al servidor, o por algún motivo se desconecta del mismo. Lo primero que haremos es ir al proyecto frontend y definir el elemento html que podrá ver el usuario:
+
+```ts
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        ...
+        <span id="server-status">offline</span>
+    </div>
+`;
+```
+
+Posteriormente, iremos al archivo `socket-client.ts` y añadimos el siguiente método:
+
+```ts
+import { Manager, Socket } from 'socket.io-client';
+...
+export const connectToServer = () => {
+    ...
+    const socket = manager.socket( '/' );
+
+    addListeners( socket );
+};
+
+const addListeners = ( socket: Socket ) => {
+    const serverStatusSpan = document.querySelector( '#server-status' )!;
+
+    socket.on( 'connect', () => {
+        serverStatusSpan.textContent = 'connected';
+    } );
+
+    socket.on( 'disconnect', () => {
+        serverStatusSpan.textContent = 'disconnected';
+    } );
+};
+```
+
+De esta manera, cada que el cliente se conecta o desconecta del servidor, el usuario tendrá la forma de observar su status frente al servidor.
