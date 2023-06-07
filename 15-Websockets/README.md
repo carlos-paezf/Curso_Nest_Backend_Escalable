@@ -950,3 +950,72 @@ Client disconnected: ZViDLxFlXr7eDKo_AAAB
 Client connected: uLuqgnDyliDODmECAAAD
 Client disconnected: uLuqgnDyliDODmECAAAD
 ```
+
+## Server - Mantener identificados los clientes
+
+El socket solo tiene información que necesita para identificar los clientes, pero no guarda relación con el servidor. Lo que vamos a hacer es identificar los clientes dentro del backend, y para esto tenemos que definir dentro del servicio de ws un objeto con los clientes que se conectan, para posteriormente añadir o remover los usuarios según la acción.
+
+```ts
+...
+import { Socket } from 'socket.io';
+
+interface IConnectedClients {
+    [ id: string ]: Socket;
+}
+
+@Injectable()
+export class MessagesWsService {
+    private connectedClients: IConnectedClients = {};
+
+    registerClient ( client: Socket ) {
+        this.connectedClients[ client.id ] = client;
+    }
+
+    removeClient ( clientId: string ) {
+        delete this.connectedClients[ clientId ];
+    }
+}
+```
+
+Luego en el gateway llamamos los métodos del servicio:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    constructor ( private readonly messagesWsService: MessagesWsService ) { }
+
+    handleConnection ( client: any ) {
+        this.messagesWsService.registerClient( client );
+    }
+
+    handleDisconnect ( client: Socket ) {
+        this.messagesWsService.removeClient( client.id );
+    }
+}
+```
+
+También podemos obtener la cantidad de clientes conectados, contando la cantidad de llaves dentro del objeto de clientes conectados, y luego mostrarlo a través del gateway:
+
+```ts
+@Injectable()
+export class MessagesWsService {
+    private connectedClients: IConnectedClients = {};
+    ...
+    getConnectedClients (): number {
+        return Object.keys( this.connectedClients ).length;
+    }
+}
+```
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    handleConnection ( client: any ) {
+        this.messagesWsService.registerClient( client );
+
+        console.log( { connectedClients: this.messagesWsService.getConnectedClients() } );
+    }
+    ...
+}
+```
