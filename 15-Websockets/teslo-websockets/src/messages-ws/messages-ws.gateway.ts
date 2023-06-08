@@ -14,21 +14,18 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
         private readonly _jwtService: JwtService
     ) { }
 
-    handleConnection ( client: Socket ) {
+    async handleConnection ( client: Socket ) {
         const token = client.handshake.headers.authentication as string;
         let payload: IJwtPayload;
 
         try {
             payload = this._jwtService.verify( token );
+            await this.messagesWsService.registerClient( client, payload.id );
         } catch ( error ) {
-            console.error( error );
             client.disconnect();
             return;
         }
 
-        console.log( { payload } );
-
-        this.messagesWsService.registerClient( client );
         this.wss.emit( 'clients-updated', this.messagesWsService.getConnectedClients() );
     }
 
@@ -54,7 +51,7 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
           */
 
         this.wss.emit( 'message-server', {
-            fullName: 'Public!!!',
+            fullName: this.messagesWsService.getUserFullName( client.id ),
             message: payload.message || 'no-message!!!'
         } );
     }

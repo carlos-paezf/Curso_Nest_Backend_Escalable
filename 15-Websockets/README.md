@@ -1328,7 +1328,7 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
 }
 ```
 
-### Validar JWT del Handshake
+## Validar JWT del Handshake
 
 Ya estamos recibiendo el token que nos envía el lado del cliente, lo que haremos ahora, es validar el JWT para obtener el payload, por lo que dentro del gateway inyectamos el servicio de JWT:
 
@@ -1378,5 +1378,82 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
         this.wss.emit( 'clients-updated', this.messagesWsService.getConnectedClients() );
     }
     ...
+}
+```
+
+## Enlazar Socket con Usuario
+
+Ahora queremos enlazar la información del usuario con el socket del cliente, una manera simple es registrar el id del payload dentro de la información de los usuarios conectados:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    async handleConnection ( client: Socket ) {
+        try {
+            ...
+            await this.messagesWsService.registerClient( client, payload.id );
+        } catch ( error ) { ... }
+    }
+    ...
+}
+```
+
+Si el usuario no se encuentra o está desactivado, retornamos un error y no procedemos con el registro de la información, además de que lo desconectamos del websocket server.
+
+```ts
+...
+interface IConnectedClients {
+    [ id: string ]: {
+        socket: Socket,
+        user: User;
+    };
+}
+
+@Injectable()
+export class MessagesWsService {
+    ...
+    constructor ( @InjectRepository( User ) private readonly _userRepository: Repository<User> ) { }
+
+    async registerClient ( client: Socket, userId: string ) {
+        const user = await this._userRepository.findOneBy( { id: userId } );
+
+        if ( !user ) throw new Error( 'User not found' );
+        if ( !user.isActive ) throw new Error( 'User not active' );
+
+        this.connectedClients[ client.id ] = {
+            socket: client,
+            user
+        };
+    }
+    ...
+}
+```
+
+Con la información del usuario siendo registrada en el objeto de clientes conectados, podemos crear un método que nos permita obtener el nombre del usuario:
+
+```ts
+@Injectable()
+export class MessagesWsService {
+    ...
+    getUserFullName ( socketId: string ) {
+        return this.connectedClients[ socketId ].user.fullName;
+    }
+}
+```
+
+Y cada que se envíe un mensaje, se podrá ver el nombre de quien lo envía:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    @SubscribeMessage( 'message-client' )
+    onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
+        this.wss.emit( 'message-server', {
+            fullName: this.messagesWsService.getUserFullName( client.id ),
+            message: payload.message || 'no-message!!!'
+        } );
+    }
 }
 ```
