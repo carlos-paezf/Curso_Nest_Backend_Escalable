@@ -1457,3 +1457,59 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
     }
 }
 ```
+
+## Desconectar usuarios duplicados
+
+Al momento que enviamos un token se crea un nuevo socket con un id diferente pero que almacena la misma información del usuario. Esto podría ser valido si tuviéramos una aplicación multiplataforma, pero en esta ocasión no deberíamos permitir esta acción.
+
+Lo primero que vamos a hacer es evaluar los usuarios conectados al momento de realizar la conexión de un nuevo socket:
+
+```ts
+@Injectable()
+export class MessagesWsService {
+    ...
+    async registerClient ( client: Socket, userId: string ) {
+        ...
+        this._checkUserConnection( user );
+        ...
+    }
+    ...
+    private _checkUserConnection ( user: User ) {
+        for ( const clientId of Object.keys( this.connectedClients ) ) {
+            const connectedClient = this.connectedClients[ clientId ];
+
+            if ( connectedClient.user.id === user.id ) {
+                connectedClient.socket.disconnect();
+                break;
+            }
+        }
+    }
+}
+```
+
+El problema en estos momentos es que el cliente muestra como desconectado al cliente con su nuevo socket id, y esto se debe a que los sockets anteriores siguen existiendo y escuchan al socket anterior. Lo que debemos hacer es remover todos los listeners, pero debemos elevar la instancia del socket a un scope superior a la función de `connectToServer()`, con el objetivo se saber si ya existía un socket anterior para eliminarlo y crear uno nuevo, o crear directamente uno nuevo:
+
+```ts
+let socket: Socket;
+
+export const connectToServer = ( token: string ) => {
+    ...
+    socket?.removeAllListeners();
+    socket = manager.socket( '/' );
+    ...
+};
+...
+```
+
+Otro inconveniente es que aún no podemos enviar mensaje y esto se debe a que gracias a que hicimos global el socket, ahora no es necesario tenerlo como parámetro dentro de `addListeners()`:
+
+```ts
+let socket: Socket;
+
+export const connectToServer = ( token: string ) => {
+    ...
+    addListeners();
+};
+
+const addListeners = () => { ... };
+```

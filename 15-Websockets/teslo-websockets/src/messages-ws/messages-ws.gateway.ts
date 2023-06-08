@@ -22,6 +22,7 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
             payload = this._jwtService.verify( token );
             await this.messagesWsService.registerClient( client, payload.id );
         } catch ( error ) {
+            console.error( { error } );
             client.disconnect();
             return;
         }
