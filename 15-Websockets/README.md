@@ -1267,3 +1267,63 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
 ```
 
 También se puede enviar el mensaje a un cliente o sala en especifico a través de `this.wss.to(<sala o clienteID>).emit()`
+
+## Preparar cliente para enviar JWT
+
+Vamos a crear un input para alojar el JWT del usuario autenticado, claramente esto no es necesario cuando tenemos la posibilidad de almacenar y recuperar el token desde el session storage, local storage o en las cookies:
+
+```ts
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        ...
+        <input id="jwt-token" placeholder="JSON Web Token" />
+        <button id="btn-connect">Connect</button>
+        ...
+    </div>
+`;
+```
+
+Ahora debemos conectarnos al servidor solo cuando pulsamos el botón de conectar y si hay un JWT, el cual pasaremos a la función de conexión:
+
+```ts
+...
+const jwtInput = document.querySelector<HTMLInputElement>( '#jwt-token' )!;
+const btnConnect = document.querySelector<HTMLButtonElement>( '#btn-connect' )!;
+
+
+btnConnect.addEventListener( 'click', () => {
+    if ( !jwtInput.value.trim().length ) return alert( 'Enter a valid JWT' );
+    connectToServer( jwtInput.value.trim() );
+} );
+```
+
+En la definición del anterior método debemos recibir el token y enviarlo en los headers de la petición de conexión:
+
+```ts
+export const connectToServer = ( token: string ) => {
+    const manager = new Manager( 'http://localhost:3000/socket.io/socket.io.js', {
+        extraHeaders: {
+            ping: 'pong',
+            authentication: `Bearer ${ token }`
+        }
+    } );
+    ...
+};
+...
+```
+
+Esta conexión la manejamos desde el gateway del servidor, en donde podemos recuperar los headers que le enviamos desde el cliente:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    handleConnection ( client: Socket ) {
+        const token = client.handshake.headers.authentication as string;
+
+        console.log( { token } );
+        ...
+    }
+    ...
+}
+```
