@@ -1327,3 +1327,56 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
     ...
 }
 ```
+
+### Validar JWT del Handshake
+
+Ya estamos recibiendo el token que nos envía el lado del cliente, lo que haremos ahora, es validar el JWT para obtener el payload, por lo que dentro del gateway inyectamos el servicio de JWT:
+
+```ts
+import { JwtService } from '@nestjs/jwt';
+
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    constructor ( ..., private readonly _jwtService: JwtService ) { }
+    ...
+}
+```
+
+Para que se pueda reconocer el servicio, es necesario importar el módulo de autenticación dentro del módulo de websockets, ya que en el primero estamos exportando la configuración del `JwtModule`:
+
+```ts
+@Module( {
+    imports: [ AuthModule ],
+    ...
+} )
+export class MessagesWsModule { }
+```
+
+Regresando al método que maneja la conexión del usuario al websocket server, extraemos el payload del jwt dentro de un try-catch con el fin de que si ocurre un error desconectamos al cliente, pero en caso contrario, usamos el payload obtenido:
+
+```ts
+import { IJwtPayload } from '../auth/interfaces';
+...
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    handleConnection ( client: Socket ) {
+        const token = client.handshake.headers.authentication as string;
+        let payload: IJwtPayload;
+
+        try {
+            payload = this._jwtService.verify( token );
+        } catch ( error ) {
+            client.disconnect();
+            return;
+        }
+
+        console.log( { payload } );
+
+        this.messagesWsService.registerClient( client );
+        this.wss.emit( 'clients-updated', this.messagesWsService.getConnectedClients() );
+    }
+    ...
+}
+```
