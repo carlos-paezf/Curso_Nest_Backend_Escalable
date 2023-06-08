@@ -1190,3 +1190,80 @@ La impresión que vamos a tener en la consola del backend al momento de escuchar
 │  message   │         'hola'         │
 └────────────┴────────────────────────┘
 ```
+
+## Formas de emitir desde el servidor
+
+Queremos que el mensaje que se emite desde el cliente, también se pueda escuchar por los usuarios conectados. Lo primero será definir el lugar donde lo ubicaremos dentro del HTML:
+
+```ts
+document.querySelector<HTMLDivElement>( '#app' )!.innerHTML = `
+    <div>
+        ...
+        <h3>Messages</h3>
+        <ul id="messages-ul"></ul>
+    </div>
+`;
+```
+
+Dentro de `socket-client.ts` creamos el cascarón del callback en donde estamos escuchando el evento emitido por el servidor:
+
+```ts
+const addListeners = ( socket: Socket ) => {
+    const messageUl = document.querySelector( '#messages-ul' )!;
+    ...
+    socket.on( 'message-server', ( payload: { fullName: string, message: string; } ) => {
+        messageUl.innerHTML += `<li>${ payload.fullName } - ${ payload.message }</li>`;
+    } );
+};
+```
+
+En el servidor usaremos el método que establecimos en el gateway de la lección anterior, ya que una vez subscrito al mensaje, lo queremos emitir al cliente:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    @SubscribeMessage( 'message-client' )
+    onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
+        client.emit( 'message-server', {
+            fullName: 'Private!!!',
+            message: payload.message || 'no-message!!!'
+        } );
+    }
+}
+```
+
+Con lo anterior, solo la persona que emite el mensaje lo va a recibir de vuelta. En el caso de que queramos emitir el mensaje a todos menos al cliente emisor, podemos modificar el método para que emita a nivel de broadcast de la siguiente manera:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    ...
+    @SubscribeMessage( 'message-client' )
+    onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
+        client.broadcast.emit( 'message-server', {
+            fullName: 'Another!!!',
+            message: payload.message || 'no-message°°°'
+        } );
+    }
+}
+```
+
+Pero si queremos que todo el mundo (incluyendo el cliente emisor) pueda escuchar el mensaje, entonces debemos usar la propiedad del websocket server:
+
+```ts
+@WebSocketGateway( { cors: true } )
+export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+    @WebSocketServer() wss: Server;
+    ...
+    @SubscribeMessage( 'message-client' )
+    onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
+        this.wss.emit( 'message-server', {
+            fullName: 'Public!!!',
+            message: payload.message || 'no-message!!!'
+        } );
+    }
+}
+```
+
+También se puede enviar el mensaje a un cliente o sala en especifico a través de `this.wss.to(<sala o clienteID>).emit()`

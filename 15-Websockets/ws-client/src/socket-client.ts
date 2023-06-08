@@ -14,7 +14,8 @@ const addListeners = ( socket: Socket ) => {
     const serverStatusSpan = document.querySelector( '#server-status' )!;
     const clientsUl = document.querySelector( '#clients-ul' )!;
     const msgForm = document.querySelector( '#message-form' )! as HTMLFormElement;
-    const msgInput = document.querySelector( '#message-input' )! as HTMLInputElement;
+    const msgInput = document.querySelector<HTMLInputElement>( '#message-input' )!;
+    const messageUl = document.querySelector( '#messages-ul' )!;
 
     socket.on( 'connect', () => {
         serverStatusSpan.innerHTML = 'connected';
@@ -42,5 +43,12 @@ const addListeners = ( socket: Socket ) => {
         socket.emit( 'message-client', { id: socket.id, message: msgInput.value } );
 
         msgInput.value = '';
+    } );
+
+    socket.on( 'message-server', ( payload: { fullName: string, message: string; } ) => {
+        messageUl.innerHTML += `<li>
+            <strong>${ payload.fullName }</strong>
+            <span>${ payload.message }</span>
+        </li>`;
     } );
 };

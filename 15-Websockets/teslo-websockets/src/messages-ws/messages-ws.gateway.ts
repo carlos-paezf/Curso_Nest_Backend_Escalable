@@ -23,6 +23,22 @@ export class MessagesWsGateway implements OnGatewayConnection, OnGatewayDisconne
 
     @SubscribeMessage( 'message-client' )
     onMessageFromClient ( client: Socket, payload: NewMessageDto ) {
-        console.table( { wsClientId: client.id, ...payload } );
+        /* 
+            client.emit( 'message-server', {
+                fullName: 'Private!!!',
+                message: payload.message || 'no-message!!!'
+            } );
+          
+
+            client.broadcast.emit( 'message-server', {
+                fullName: 'Another!!!',
+                message: payload.message || 'no-message°°°'
+            } ); 
+          */
+
+        this.wss.emit( 'message-server', {
+            fullName: 'Public!!!',
+            message: payload.message || 'no-message!!!'
+        } );
     }
 }
