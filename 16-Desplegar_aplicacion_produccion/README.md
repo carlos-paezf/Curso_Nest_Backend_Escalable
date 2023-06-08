@@ -47,3 +47,9 @@ Para el proyecto cliente frontend usamos el siguiente comando para levantar la a
 ```txt
 $: pnpm dev
 ```
+
+## Postgres en la nube
+
+Nuestra base de datos actualmente se encuentra en local y es gratuita, pero, al momento de pensar en la nube tenemos el problema de que para publicar y usar una imagen de docker debemos pagar. Una opción es hacer uso de AWS, Heroku, Railway, Render, etc.
+
+Cuando tenemos listo el servicio de la base de datos debemos obtener la configuración de conexión para enlazarla a las variables del proyecto backend.
