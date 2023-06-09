@@ -37,3 +37,7 @@ Algunas de las instalaciones recomendadas para el curso son las siguientes: [(Do
 - [Sección 14: Documentación - OpenAPI](./14-Documentacion_OpenAPI/README.md)
 - [Sección 15: Websockets](./15-Websockets/README.md)
 - [Sección 16: Desplegar toda la aplicación a producción](./16-Desplegar_aplicacion_produccion/README.md)
+
+## Certificado de finalización del curso
+
+![certificado](UC-b9800026-16ed-4820-b4a3-3a8e5ebad8c2.jpg)
