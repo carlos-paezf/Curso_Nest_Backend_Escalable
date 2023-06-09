@@ -53,3 +53,60 @@ $: pnpm dev
 Nuestra base de datos actualmente se encuentra en local y es gratuita, pero, al momento de pensar en la nube tenemos el problema de que para publicar y usar una imagen de docker debemos pagar. Una opción es hacer uso de AWS, Heroku, Railway, Render, etc.
 
 Cuando tenemos listo el servicio de la base de datos debemos obtener la configuración de conexión para enlazarla a las variables del proyecto backend.
+
+## Configuraciones faltantes para despliegue
+
+Dentro de las variables de entorno definimos una variable para establecer la etapa del proyecto:
+
+```env
+STAGE=dev
+```
+
+Luego, en la configuración de TypeORM debemos reconocer dicha variable en la propiedad de `ssl` y en `extra` para establecer una configuración especifica:
+
+```ts
+@Module( {
+    imports: [
+        ...,
+        TypeOrmModule.forRoot( {
+            ssl: process.env.STAGE === 'prod',
+            extra: {
+                ssl: process.env.STAGE === 'prod'
+                    ? { rejectUnauthorized: true }
+                    : null
+            },
+            ...
+        } ),
+        ...
+    ],
+} )
+export class AppModule { }
+```
+
+Otra configuración que tendremos en cuenta será establecer el motor de node que se debería usar en la plataforma en la nube, y para ello definimos la configuración en `package.json`:
+
+```json
+{
+    ...,
+    "engines": {
+        "node": "17.x"
+    },
+    ...
+}
+```
+
+Al momento de lanzar el proyecto se ejecutara el comando `npm run build` y posterior `npm run start`, para el cual debemos cambiar el valor por lo siguiente:
+
+```json
+{
+    ...,
+    "scripts": {
+        ...,
+        "start": "node dist/main",
+        ...,
+        "start:prod": "nest start",
+        ...
+    },
+    ...
+}
+```

@@ -13,6 +13,12 @@ import { MessagesWsModule } from './messages-ws/messages-ws.module';
             validationSchema: JoiValidationSchema
         } ),
         TypeOrmModule.forRoot( {
+            ssl: process.env.STAGE === 'prod',
+            extra: {
+                ssl: process.env.STAGE === 'prod'
+                    ? { rejectUnauthorized: true }
+                    : null
+            },
             type: 'postgres',
             host: process.env.DB_HOST,
             port: Number( process.env.DB_PORT ),
